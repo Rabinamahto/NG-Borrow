@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy, updateDoc, doc, addDoc, serverTimestamp, where, getDocs } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, updateDoc, doc, addDoc, serverTimestamp, where, getDocs, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { FiCheck, FiX, FiClock, FiUser, FiMail, FiPhone, FiMessageSquare, FiMessageCircle, FiRotateCcw } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
@@ -263,8 +263,8 @@ const BorrowRequests = () => {
               status: 'active'
             };
 
-            // Create chat document
-            await addDoc(collection(db, 'chats'), {
+            // Create chat document with predictable ID so messages can be stored under chats/{chatId}/messages
+            await setDoc(doc(db, 'chats', chatId), {
               chatId: chatId,
               ...chatData
             });

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { auth, db } from '../firebase';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 
 /**
@@ -93,6 +95,10 @@ const MOCK_PRODUCTS = [
 const getSimulatedMessages = (contactId) => {
     return [];
 };
+
+import { getDisplayName as getNameHelper, getSnippet, formatRelativeTime } from '../utils/chatHelpers';
+
+const getDisplayName = (user) => getNameHelper(user);
 
 
 const ContextMenu = ({ x, y, onAction, onCancel }) => {
@@ -212,6 +218,39 @@ const ChatComponent = ({ contact, onClose }) => {
   const messagesEndRef = useRef(null);
   const pressTimer = useRef(null);
 
+  // Load messages from Firestore if chatId exists, otherwise fallback to localStorage
+  useEffect(() => {
+    let unsub = null;
+    const load = async () => {
+      try {
+        if (contact?.chatId && db) {
+          const messagesQuery = query(collection(db, 'chats', contact.chatId, 'messages'), orderBy('timestamp', 'asc'));
+          unsub = onSnapshot(messagesQuery, (snapshot) => {
+            const list = [];
+            snapshot.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
+            setMessages(list);
+          }, (err) => {
+            console.warn('Failed to load firestore messages, falling back to localStorage', err);
+            // fallback continues below
+          });
+        } else {
+          // localStorage fallback: chat_<user1>_<user2>
+          const currentUserId = auth.currentUser?.uid || 'demo-user';
+          const chatId = [currentUserId, contact.id].sort().join('_');
+          const chatKey = 'chat_' + chatId;
+          const msgs = JSON.parse(localStorage.getItem(chatKey) || '[]');
+          setMessages(msgs);
+        }
+      } catch (err) {
+        console.error('Error loading messages for contact', err);
+      }
+    };
+
+    load();
+
+    return () => { if (unsub) unsub(); };
+  }, [contact]);
+
   useEffect(() => {
     setMessages(getSimulatedMessages(contact.id));
     setEditingMessageId(null);
@@ -222,6 +261,27 @@ const ChatComponent = ({ contact, onClose }) => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "instant" }); 
   }, [messages, contact.id]); 
+
+  // Ensure selected contact appears in left conversation list
+  useEffect(() => {
+    try {
+      if (!contact) return;
+      const selId = contact?.id || contact?.uid || contact?.userId || (typeof contact === 'string' ? contact : null);
+      if (!selId) return;
+      const selName = contact?.name || contact?.displayName || selId;
+      const normalized = { id: selId, name: selName, ...contact };
+
+      // chat list is drawn from MOCK_PRODUCTS in this view; but keep a session-local list in localStorage
+      const existingJSON = localStorage.getItem('chatUsers');
+      const existing = existingJSON ? JSON.parse(existingJSON) : [];
+      if (!existing.find(u => u.id === selId)) {
+        const next = [normalized, ...existing];
+        try { localStorage.setItem('chatUsers', JSON.stringify(next)); } catch (e) {}
+      }
+    } catch (err) {
+      console.warn('Failed to ensure contact in left list', err);
+    }
+  }, [contact]);
 
   useEffect(() => {
     if (statusMessage.text) {
@@ -495,9 +555,115 @@ const ProductListItem = ({ contact, onChat }) => {
 };
 
 const ListView = ({ onChatSelect }) => {
-  const active = MOCK_PRODUCTS.filter((p) =>
-    ["Request Accepted", "You Purchased"].includes(p.status)
-  );
+  const [conversations, setConversations] = useState(MOCK_PRODUCTS);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadConversations = async () => {
+      try {
+        const unique = new Map();
+        const currentUserId = auth.currentUser?.uid || 'demo-user';
+
+        // load from localStorage borrowRequests (approved ones)
+        const borrowRequests = JSON.parse(localStorage.getItem('borrowRequests') || '[]');
+        const approved = borrowRequests.filter(r => r.status === 'approved');
+        approved.forEach(req => {
+          // owner or borrower
+          if (req.borrowerId === currentUserId && req.itemOwnerId) {
+            unique.set(req.itemOwnerId, {
+              id: req.itemOwnerId,
+              name: req.itemOwnerName || req.itemOwnerEmail || req.itemOwnerId,
+              itemName: req.itemTitle || '',
+              itemImage: req.itemImage || null,
+              chatId: req.chatId || null
+            });
+          }
+          if (req.itemOwnerId === currentUserId && req.borrowerId) {
+            unique.set(req.borrowerId, {
+              id: req.borrowerId,
+              name: req.borrowerName || req.borrowerEmail || req.borrowerId,
+              itemName: req.itemTitle || '',
+              itemImage: req.itemImage || null,
+              chatId: req.chatId || null
+            });
+          }
+        });
+
+        // merge localStorage chat_* conversations
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (!key || !key.startsWith('chat_')) continue;
+          const msgs = JSON.parse(localStorage.getItem(key) || '[]');
+          if (!Array.isArray(msgs) || msgs.length === 0) continue;
+          const idPart = key.replace('chat_', '');
+          const parts = idPart.split('_');
+          const otherId = parts.find(p => p !== currentUserId) || parts[0];
+          const lastMsg = msgs[msgs.length - 1];
+          if (!unique.has(otherId)) {
+            unique.set(otherId, {
+              id: otherId,
+              name: lastMsg.senderName || lastMsg.receiverName || otherId,
+              itemName: lastMsg.itemName || '',
+              itemImage: null,
+              chatId: null,
+              lastMessage: lastMsg.text,
+              lastMessageAt: lastMsg.timestamp
+            });
+          } else {
+            const ex = unique.get(otherId);
+            ex.lastMessage = lastMsg.text;
+            ex.lastMessageAt = lastMsg.timestamp;
+            unique.set(otherId, ex);
+          }
+        }
+
+        // If firebase configured, listen to users/{uid}/chats once and merge
+        if (auth.currentUser && db) {
+          try {
+            const q = query(collection(db, 'users', currentUserId, 'chats'), orderBy('lastMessageAt', 'desc'));
+            const unsub = onSnapshot(q, (snapshot) => {
+              snapshot.forEach(doc => {
+                const d = doc.data();
+                const other = d.otherUserId || d.withUserId || d.participantId;
+                if (!other) return;
+                const existing = unique.get(other) || {};
+                unique.set(other, {
+                  id: other,
+                  name: d.otherUserName || d.withUserName || d.otherUserEmail || existing.name || other,
+                  itemName: d.itemTitle || existing.itemName || '',
+                  itemImage: d.itemImage || existing.itemImage || null,
+                  chatId: d.chatId || doc.id || existing.chatId || null,
+                  lastMessage: d.lastMessage || existing.lastMessage || '',
+                  lastMessageAt: d.lastMessageAt || existing.lastMessageAt || null
+                });
+              });
+              setConversations(Array.from(unique.values()));
+              setLoading(false);
+            }, (err) => {
+              console.warn('Failed to listen to firestore chats', err);
+              setConversations(Array.from(unique.values()));
+              setLoading(false);
+            });
+            // keep unsub on window for dev (optional)
+            window.__cv_unsub = unsub;
+          } catch (err) {
+            console.warn('Error querying firestore chats', err);
+            setConversations(Array.from(unique.values()));
+            setLoading(false);
+          }
+        } else {
+          setConversations(Array.from(unique.values()).length ? Array.from(unique.values()) : MOCK_PRODUCTS);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Error loading conversations', err);
+        setConversations(MOCK_PRODUCTS);
+        setLoading(false);
+      }
+    };
+
+    loadConversations();
+  }, []);
 
   return (
     <div className="p-4 sm:p-6 w-full flex flex-col h-full"> 
@@ -505,11 +671,13 @@ const ListView = ({ onChatSelect }) => {
         Active Product Conversations
       </h1>
       <div className="flex-grow overflow-y-auto custom-scrollbar pr-2"> 
-        {active.length === 0 ? (
+        {loading ? (
+          <p className="text-gray-500 italic text-center py-10">Loading...</p>
+        ) : conversations.length === 0 ? (
           <p className="text-gray-500 italic text-center py-10">No active chats found.</p>
         ) : (
-          active.map((contact) => (
-            <ProductListItem key={contact.id} contact={contact} onChat={onChatSelect} />
+          conversations.map((contact) => (
+            <ProductListItem key={contact.id || contact.chatId || contact.email} contact={contact} onChat={onChatSelect} />
           ))
         )}
       </div>

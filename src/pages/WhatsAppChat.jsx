@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
-import { FiSend, FiUser, FiMoreVertical, FiPhone, FiVideo } from 'react-icons/fi';
+import { FiSend, FiUser, FiMoreVertical } from 'react-icons/fi';
 import { BsEmojiSmile } from 'react-icons/bs';
+import { getSnippet, formatRelativeTime } from '../utils/chatHelpers';
 
 const WhatsAppChat = () => {
   const [selectedUser, setSelectedUser] = useState(null);
@@ -12,6 +13,22 @@ const WhatsAppChat = () => {
   const [chatUsers, setChatUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
+  
+  const getDisplayName = (user) => {
+    if (!user) return 'Unknown User';
+    return (
+      user.name ||
+      user.otherUserName ||
+      user.withUserName ||
+      user.borrowerName ||
+      user.itemOwnerName ||
+      user.receiverName ||
+      user.senderName ||
+      user.email ||
+      user.otherUserEmail ||
+      'Unknown User'
+    );
+  };
   const currentUser = auth?.currentUser;
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -78,6 +95,27 @@ const WhatsAppChat = () => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
+
+  // If a chat is opened but that user is not yet in the list, add them so left column shows the active chat
+  useEffect(() => {
+    try {
+      if (!selectedUser) return;
+      const selId = selectedUser?.id || selectedUser?.uid || selectedUser?.userId || selectedUser?.otherUserId || selectedUser?.borrowerId || selectedUser?.itemOwnerId || (typeof selectedUser === 'string' ? selectedUser : null);
+      if (!selId) return;
+      const selName = getDisplayName(selectedUser);
+      const normalized = { id: selId, name: selName, ...selectedUser };
+
+      setChatUsers(prev => {
+        const list = Array.isArray(prev) ? prev.slice() : [];
+        if (list.find(u => u.id === selId)) return list;
+        const next = [normalized, ...list];
+        try { localStorage.setItem('chatUsers', JSON.stringify(next)); } catch (e) {}
+        return next;
+      });
+    } catch (err) {
+      console.warn('Failed to ensure selected user in chatUsers', err);
+    }
+  }, [selectedUser]);
 
     // Handle URL parameters for direct user selection
   useEffect(() => {
@@ -776,6 +814,31 @@ const WhatsAppChat = () => {
 
         {/* Chat Users List */}
         <div className="flex-1 overflow-y-auto">
+          {/* Ensure selectedUser is shown at top even if not present in chatUsers */}
+          { (() => {
+              const exists = selectedUser && chatUsers.find(u => u.id === selectedUser.id);
+              if (selectedUser && !exists) {
+                return (
+                  <div key={`selected-${selectedUser.id}`} onClick={() => handleUserSelect(selectedUser)} className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${selectedUser?.id === selectedUser?.id ? 'bg-green-50 border-l-4 border-l-green-500' : ''}`}>
+                    <div className="flex items-center space-x-3">
+                      <div className="relative flex-shrink-0">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">{ (getDisplayName(selectedUser) || 'U').charAt(0).toUpperCase() }</div>
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-1">
+                          <h3 className="font-semibold text-gray-900 truncate mr-2">{getDisplayName(selectedUser)}</h3>
+                          <span className="text-xs text-gray-500">{formatRelativeTime(selectedUser?.lastMessageAt || selectedUser?.lastMessageTime)}</span>
+                        </div>
+                        <p className="text-sm text-gray-600 truncate">📦 {selectedUser.itemName || 'Chat Item'}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()
+          }
           {loading ? (
             <div className="p-6 text-center text-gray-500">
               <div className="animate-spin w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -821,7 +884,7 @@ const WhatsAppChat = () => {
                       />
                     ) : (
                       <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
-                        {user.avatar}
+                        { (getDisplayName(user) || 'U').charAt(0).toUpperCase() }
                       </div>
                     )}
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
@@ -831,7 +894,7 @@ const WhatsAppChat = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1">
                       <div className="flex items-center">
-                        <h3 className="font-semibold text-gray-900 truncate mr-2">{user.name}</h3>
+                        <h3 className="font-semibold text-gray-900 truncate mr-2">{getDisplayName(user)}</h3>
                         {user.role === 'owner' && (
                           <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
                             Owner
@@ -848,16 +911,7 @@ const WhatsAppChat = () => {
                           </span>
                         )}
                       </div>
-                      <span className="text-xs text-gray-500 flex-shrink-0">
-                        {user.lastMessageTime ? 
-                          new Date(user.lastMessageTime).toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false
-                          }) : 
-                          'now'
-                        }
-                      </span>
+                      <span className="text-xs text-gray-500 flex-shrink-0">{formatRelativeTime(user.lastMessageTime || user.lastMessageAt)}</span>
                     </div>
                     
                     {/* Items Display */}
@@ -876,9 +930,7 @@ const WhatsAppChat = () => {
                     
                     {/* Last Message */}
                     {user.lastMessage ? (
-                      <p className="text-xs text-gray-500 truncate">
-                        💬 {user.lastMessage}
-                      </p>
+                      <p className="text-xs text-gray-500 truncate">💬 {getSnippet(user.lastMessage, 80)}</p>
                     ) : (
                       <p className="text-xs text-green-600">
                         {user.itemCategory || 'Chat'} • Click to start conversation
@@ -909,16 +961,14 @@ const WhatsAppChat = () => {
                   </button>
                 )}
                 <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
-                  {selectedUser.avatar}
+                  {getDisplayName(selectedUser).charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="font-semibold">{selectedUser.name}</h3>
+                  <h3 className="font-semibold">{getDisplayName(selectedUser)}</h3>
                   <p className="text-xs text-green-100">{selectedUser.lastSeen}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                <FiPhone className="w-5 h-5 cursor-pointer hover:text-green-200" />
-                <FiVideo className="w-5 h-5 cursor-pointer hover:text-green-200" />
                 <FiMoreVertical className="w-5 h-5 cursor-pointer hover:text-green-200" />
               </div>
             </div>
