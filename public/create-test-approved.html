@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Test Approved Request</title>
+</head>
+<body>
+    <h1>Creating Test Approved Request...</h1>
+    <script>
+        // Create a test approved borrow request
+        const testApprovedRequest = {
+            id: 'req_test_001',
+            borrowRequestId: 'req_test_001',
+            itemId: 'item_test_001',
+            itemTitle: 'Smart Watch',
+            itemCategory: 'Electronics',
+            itemImage: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
+            
+            // Item owner (current user will be the owner)
+            itemOwnerId: 'demo-user',
+            itemOwnerName: 'You (Demo User)',
+            itemOwnerEmail: 'demo@example.com',
+            itemOwnerPhone: '+91 98765 43210',
+            
+            // Borrower (Nisha)
+            borrowerId: 'user_nisha_001',
+            borrowerName: 'Nisha',
+            borrowerEmail: 'nisha@example.com',
+            borrowerPhone: '2345678798',
+            
+            status: 'approved',
+            message: 'I want',
+            borrowDuration: '1 week',
+            createdAt: new Date().toISOString(),
+            approvedAt: new Date().toISOString()
+        };
+
+        // Also create the reverse request (where current user is borrower)
+        const testApprovedRequest2 = {
+            id: 'req_test_002',
+            borrowRequestId: 'req_test_002',
+            itemId: 'item_test_002',
+            itemTitle: 'Bluetooth Speaker',
+            itemCategory: 'Electronics',
+            itemImage: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400',
+            
+            // Item owner (Ruchi Shah)
+            itemOwnerId: 'user_ruchi_001',
+            itemOwnerName: 'Ruchi Shah',
+            itemOwnerEmail: 'ruchi@example.com',
+            itemOwnerPhone: '+91 98765 43211',
+            
+            // Borrower (current user)
+            borrowerId: 'demo-user',
+            borrowerName: 'You (Demo User)',
+            borrowerEmail: 'demo@example.com',
+            borrowerPhone: '+91 98765 43210',
+            
+            status: 'approved',
+            message: 'Need for party',
+            borrowDuration: '2 days',
+            createdAt: new Date().toISOString(),
+            approvedAt: new Date().toISOString()
+        };
+
+        // Get existing requests and add our test data
+        const existingRequests = JSON.parse(localStorage.getItem('borrowRequests') || '[]');
+        
+        // Remove any existing test data first
+        const filteredRequests = existingRequests.filter(req => 
+            !req.id.startsWith('req_test_')
+        );
+        
+        // Add our test requests
+        filteredRequests.push(testApprovedRequest, testApprovedRequest2);
+        
+        // Save to localStorage
+        localStorage.setItem('borrowRequests', JSON.stringify(filteredRequests));
+        
+        console.log('✅ Test approved requests created!');
+        console.log('Created requests:', [testApprovedRequest, testApprovedRequest2]);
+        
+        alert('Test approved requests created!\n\nNow go to:\n1. /borrow-requests to see approved requests\n2. Click "Chat with Nisha" or "Chat with Ruchi Shah"\n3. Should open chat with user profile');
+        
+        // Redirect to borrow requests
+        setTimeout(() => {
+            window.location.href = '/#/borrow-requests';
+        }, 2000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Persistence Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 25px 0;
+            padding: 20px;
+            border: 2px solid #25D366;
+            border-radius: 12px;
+            background: #f8fff8;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #128C7E;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #25D366;
+        }
+        .step-number {
+            display: inline-block;
+            background: #25D366;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 25px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        button {
+            background: linear-gradient(135deg, #25D366 0%, #20BF5F 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            color: #004085;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .status-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status-card h4 {
+            margin-top: 0;
+            color: #25D366;
+        }
+        .emoji {
+            font-size: 1.2rem;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💬 Chat Persistence Test Suite</h1>
+            <p>Test that all previous chats are properly loaded on chat page</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 Quick Setup & Test</h3>
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>Setup Complete Test Data</strong>
+                <br>Creates approved requests + previous chat conversations
+                <button onclick="setupCompleteData()">Setup Test Data</button>
+                <div id="setupStatus"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔄 Chat Persistence Tests</h3>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Test Direct Chat Page Access</strong>
+                <br>Go to chat page directly (not via request buttons)
+                <button onclick="openChatDirect()">Open Chat Page</button>
+                <div class="info">
+                    <strong>Expected:</strong> All previous chat users should appear in left sidebar with:
+                    <ul>
+                        <li>✅ User names and avatars</li>
+                        <li>✅ Item information</li>
+                        <li>✅ Last message preview</li>
+                        <li>✅ Message timestamps</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>Test Navigation Persistence</strong>
+                <br>Navigate between pages and return to chat
+                <button onclick="testNavigation()">Test Navigation Flow</button>
+                <div class="warning">
+                    <strong>Test Steps:</strong>
+                    <ol>
+                        <li>Go to Chat page → verify users show</li>
+                        <li>Go to Home page</li>
+                        <li>Go to Browse Items page</li>
+                        <li>Return to Chat page → verify users still show</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">4</span>
+                <strong>Test Chat History Loading</strong>
+                <br>Click on users to verify chat history loads
+                <button onclick="showChatInstructions()">Show Instructions</button>
+                <div class="info">
+                    Click on each user in the left sidebar and verify:
+                    <ul>
+                        <li>✅ Previous messages appear in chat</li>
+                        <li>✅ Correct message order (oldest to newest)</li>
+                        <li>✅ Message timestamps are correct</li>
+                        <li>✅ Sender/receiver info is accurate</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">5</span>
+                <strong>Test New Message Persistence</strong>
+                <br>Send new messages and verify they persist
+                <button onclick="testNewMessages()">Test Instructions</button>
+                <div class="warning">
+                    <strong>Test Process:</strong>
+                    <ol>
+                        <li>Select a user and send a new message</li>
+                        <li>Navigate away from chat page</li>
+                        <li>Return to chat page</li>
+                        <li>Verify new message appears in chat history</li>
+                        <li>Verify last message shows in user preview</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Current Chat Data Status</h3>
+            <button onclick="showFullStatus()">Show Detailed Status</button>
+            <button onclick="testChatButtons()">Test Chat Buttons</button>
+            <button onclick="clearTestData()">Clear All Data</button>
+            <div id="statusDisplay"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Expected Behavior Summary</h3>
+            <div class="status-grid">
+                <div class="status-card">
+                    <h4><span class="emoji">👥</span> User Loading</h4>
+                    <ul>
+                        <li>All previous chat users show</li>
+                        <li>Users from approved requests</li>
+                        <li>Users from existing conversations</li>
+                        <li>Proper user roles (Owner/Borrower)</li>
+                    </ul>
+                </div>
+                <div class="status-card">
+                    <h4><span class="emoji">💬</span> Message History</h4>
+                    <ul>
+                        <li>All previous messages load</li>
+                        <li>Correct chronological order</li>
+                        <li>Message editing/deletion works</li>
+                        <li>Last message preview in sidebar</li>
+                    </ul>
+                </div>
+                <div class="status-card">
+                    <h4><span class="emoji">📦</span> Item Information</h4>
+                    <ul>
+                        <li>Item names and categories</li>
+                        <li>Multiple items per user shown</li>
+                        <li>Item images if available</li>
+                        <li>Proper item consolidation</li>
+                    </ul>
+                </div>
+                <div class="status-card">
+                    <h4><span class="emoji">🔄</span> Persistence</h4>
+                    <ul>
+                        <li>Survives page refresh</li>
+                        <li>Survives navigation</li>
+                        <li>Works across browser tabs</li>
+                        <li>Maintains state on return</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setupCompleteData() {
+            // Create comprehensive borrow requests
+            const borrowRequests = [
+                {
+                    id: 'req_persist_001',
+                    borrowRequestId: 'req_persist_001',
+                    itemId: 'item_persist_001',
+                    itemTitle: 'iPhone 15 Pro Max',
+                    itemImage: 'https://via.placeholder.com/150x150/007AFF/FFFFFF?text=iPhone',
+                    itemCategory: 'Electronics',
+                    itemOwnerId: 'owner_rahul',
+                    itemOwnerName: 'Rahul Sharma',
+                    itemOwnerEmail: 'rahul@example.com',
+                    itemOwnerPhone: '+91 9876543210',
+                    borrowerId: 'demo-user',
+                    borrowerName: 'Demo User', 
+                    borrowerEmail: 'demo@example.com',
+                    borrowerPhone: '+91 8765432109',
+                    status: 'approved',
+                    requestDate: new Date(Date.now() - 86400000).toISOString(),
+                    approvedAt: new Date(Date.now() - 43200000).toISOString()
+                },
+                {
+                    id: 'req_persist_002',
+                    borrowRequestId: 'req_persist_002', 
+                    itemId: 'item_persist_002',
+                    itemTitle: 'MacBook Air M2',
+                    itemImage: 'https://via.placeholder.com/150x150/A855F7/FFFFFF?text=MacBook',
+                    itemCategory: 'Electronics',
+                    itemOwnerId: 'owner_rahul', // Same owner
+                    itemOwnerName: 'Rahul Sharma',
+                    itemOwnerEmail: 'rahul@example.com', 
+                    itemOwnerPhone: '+91 9876543210',
+                    borrowerId: 'demo-user',
+                    borrowerName: 'Demo User',
+                    borrowerEmail: 'demo@example.com',
+                    borrowerPhone: '+91 8765432109',
+                    status: 'approved',
+                    requestDate: new Date(Date.now() - 172800000).toISOString(),
+                    approvedAt: new Date(Date.now() - 86400000).toISOString()
+                },
+                {
+                    id: 'req_persist_003',
+                    borrowRequestId: 'req_persist_003',
+                    itemId: 'item_persist_003', 
+                    itemTitle: 'Sony A7R V Camera',
+                    itemImage: 'https://via.placeholder.com/150x150/FF5722/FFFFFF?text=Camera',
+                    itemCategory: 'Electronics',
+                    itemOwnerId: 'owner_priya',
+                    itemOwnerName: 'Priya Patel',
+                    itemOwnerEmail: 'priya@example.com',
+                    itemOwnerPhone: '+91 7654321098',
+                    borrowerId: 'demo-user',
+                    borrowerName: 'Demo User',
+                    borrowerEmail: 'demo@example.com', 
+                    borrowerPhone: '+91 8765432109',
+                    status: 'approved',
+                    requestDate: new Date(Date.now() - 259200000).toISOString(),
+                    approvedAt: new Date(Date.now() - 172800000).toISOString()
+                },
+                {
+                    id: 'req_persist_004',
+                    borrowRequestId: 'req_persist_004',
+                    itemId: 'item_persist_004',
+                    itemTitle: 'Gaming Chair RGB',
+                    itemImage: 'https://via.placeholder.com/150x150/8B5CF6/FFFFFF?text=Chair',
+                    itemCategory: 'Furniture', 
+                    itemOwnerId: 'owner_amit',
+                    itemOwnerName: 'Amit Kumar',
+                    itemOwnerEmail: 'amit@example.com',
+                    itemOwnerPhone: '+91 6543210987',
+                    borrowerId: 'demo-user',
+                    borrowerName: 'Demo User',
+                    borrowerEmail: 'demo@example.com',
+                    borrowerPhone: '+91 8765432109',
+                    status: 'approved',
+                    requestDate: new Date(Date.now() - 345600000).toISOString(),
+                    approvedAt: new Date(Date.now() - 259200000).toISOString()
+                }
+            ];
+
+            localStorage.setItem('borrowRequests', JSON.stringify(borrowRequests));
+
+            // Create rich chat conversations
+            const conversations = [
+                {
+                    chatId: 'chat_demo-user_owner_rahul',
+                    messages: [
+                        {
+                            id: 'msg_persist_001',
+                            text: 'Hi Rahul! Thanks for approving my iPhone request! 📱',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_rahul',
+                            receiverName: 'Rahul Sharma',
+                            itemName: 'iPhone 15 Pro Max',
+                            timestamp: new Date(Date.now() - 43200000).toISOString(),
+                            createdAt: new Date(Date.now() - 43200000)
+                        },
+                        {
+                            id: 'msg_persist_002', 
+                            text: 'You\'re welcome! The iPhone is in pristine condition. Also, I see you requested the MacBook too - both are ready!',
+                            senderId: 'owner_rahul',
+                            senderName: 'Rahul Sharma',
+                            receiverId: 'demo-user',
+                            receiverName: 'Demo User', 
+                            itemName: 'iPhone 15 Pro Max',
+                            timestamp: new Date(Date.now() - 39600000).toISOString(),
+                            createdAt: new Date(Date.now() - 39600000)
+                        },
+                        {
+                            id: 'msg_persist_003',
+                            text: 'Amazing! When can I pick them up? I can come anytime after 4 PM.',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_rahul', 
+                            receiverName: 'Rahul Sharma',
+                            itemName: 'iPhone 15 Pro Max',
+                            timestamp: new Date(Date.now() - 36000000).toISOString(),
+                            createdAt: new Date(Date.now() - 36000000)
+                        },
+                        {
+                            id: 'msg_persist_004',
+                            text: 'Perfect! How about 5:30 PM today? I\'ll have both devices charged and ready. The MacBook has all the latest software installed too! 💻',
+                            senderId: 'owner_rahul',
+                            senderName: 'Rahul Sharma',
+                            receiverId: 'demo-user',
+                            receiverName: 'Demo User',
+                            itemName: 'iPhone 15 Pro Max', 
+                            timestamp: new Date(Date.now() - 32400000).toISOString(),
+                            createdAt: new Date(Date.now() - 32400000)
+                        },
+                        {
+                            id: 'msg_persist_005',
+                            text: 'Sounds great! See you at 5:30. Thanks for being so helpful! 🙏',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_rahul',
+                            receiverName: 'Rahul Sharma',
+                            itemName: 'iPhone 15 Pro Max',
+                            timestamp: new Date(Date.now() - 28800000).toISOString(),
+                            createdAt: new Date(Date.now() - 28800000)
+                        }
+                    ]
+                },
+                {
+                    chatId: 'chat_demo-user_owner_priya',
+                    messages: [
+                        {
+                            id: 'msg_persist_101',
+                            text: 'Hi Priya! Excited about the Sony camera! I\'m a photography enthusiast 📸',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_priya',
+                            receiverName: 'Priya Patel',
+                            itemName: 'Sony A7R V Camera',
+                            timestamp: new Date(Date.now() - 172800000).toISOString(),
+                            createdAt: new Date(Date.now() - 172800000)
+                        },
+                        {
+                            id: 'msg_persist_102',
+                            text: 'That\'s wonderful! The A7R V is perfect for enthusiasts. I\'ve included extra lenses and a tripod. Do you have experience with mirrorless cameras?',
+                            senderId: 'owner_priya',
+                            senderName: 'Priya Patel',
+                            receiverId: 'demo-user',
+                            receiverName: 'Demo User',
+                            itemName: 'Sony A7R V Camera',
+                            timestamp: new Date(Date.now() - 169200000).toISOString(),
+                            createdAt: new Date(Date.now() - 169200000)
+                        },
+                        {
+                            id: 'msg_persist_103',
+                            text: 'Some experience, but this will be my first time with such a high-end model. Any specific tips for the A7R V?',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_priya',
+                            receiverName: 'Priya Patel',
+                            itemName: 'Sony A7R V Camera',
+                            timestamp: new Date(Date.now() - 165600000).toISOString(),
+                            createdAt: new Date(Date.now() - 165600000)
+                        },
+                        {
+                            id: 'msg_persist_104',
+                            text: 'Absolutely! The resolution is incredible - 61MP. Start with Auto mode, then try Manual. I\'ll show you the custom settings when you pick it up! 📷✨',
+                            senderId: 'owner_priya',
+                            senderName: 'Priya Patel',
+                            receiverId: 'demo-user',
+                            receiverName: 'Demo User',
+                            itemName: 'Sony A7R V Camera',
+                            timestamp: new Date(Date.now() - 162000000).toISOString(),
+                            createdAt: new Date(Date.now() - 162000000)
+                        }
+                    ]
+                },
+                {
+                    chatId: 'chat_demo-user_owner_amit',
+                    messages: [
+                        {
+                            id: 'msg_persist_201',
+                            text: 'Hey Amit! Thanks for the gaming chair approval! My setup is almost complete now 🎮',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_amit',
+                            receiverName: 'Amit Kumar',
+                            itemName: 'Gaming Chair RGB',
+                            timestamp: new Date(Date.now() - 259200000).toISOString(),
+                            createdAt: new Date(Date.now() - 259200000)
+                        },
+                        {
+                            id: 'msg_persist_202',
+                            text: 'Awesome! The RGB lighting is fully customizable. I\'ve included the software CD and all cables. What games do you play?',
+                            senderId: 'owner_amit',
+                            senderName: 'Amit Kumar', 
+                            receiverId: 'demo-user',
+                            receiverName: 'Demo User',
+                            itemName: 'Gaming Chair RGB',
+                            timestamp: new Date(Date.now() - 255600000).toISOString(),
+                            createdAt: new Date(Date.now() - 255600000)
+                        },
+                        {
+                            id: 'msg_persist_203',
+                            text: 'Mostly FPS games like Valorant and Apex! The RGB will match my keyboard perfectly. Can\'t wait to try it out! 🌈',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_amit', 
+                            receiverName: 'Amit Kumar',
+                            itemName: 'Gaming Chair RGB',
+                            timestamp: new Date(Date.now() - 252000000).toISOString(),
+                            createdAt: new Date(Date.now() - 252000000)
+                        }
+                    ]
+                }
+            ];
+
+            // Save all conversations
+            conversations.forEach(conv => {
+                localStorage.setItem(conv.chatId, JSON.stringify(conv.messages));
+            });
+
+            document.getElementById('setupStatus').innerHTML = 
+                '<div class="success">' +
+                '✅ Complete test data created!<br>' +
+                '📱 4 approved requests from 3 different users<br>' +
+                '💬 Rich chat conversations with 12 messages<br>' +
+                '🔗 Multiple items per user (Rahul has iPhone + MacBook)<br>' +
+                '⏰ Realistic timestamps and conversation flow' +
+                '</div>';
+        }
+
+        function openChatDirect() {
+            window.open('/chat', '_blank', 'width=1200,height=800');
+        }
+
+        function testNavigation() {
+            alert('🧭 Navigation Test Instructions:\n\n1. Click "Open Chat" below\n2. Verify all users appear in left sidebar\n3. Navigate: Home → Browse Items → Chat\n4. Verify users still appear after each navigation\n\nExpected: Chat users should persist across all navigation');
+            window.open('/chat', '_blank');
+        }
+
+        function showChatInstructions() {
+            alert('💬 Chat History Test:\n\n1. Go to chat page\n2. Click on each user in left sidebar:\n   • Rahul (iPhone + MacBook)\n   • Priya (Sony Camera) \n   • Amit (Gaming Chair)\n\n3. Verify for each chat:\n   ✅ Previous messages load\n   ✅ Correct chronological order\n   ✅ Proper sender/receiver info\n   ✅ Item information displayed');
+        }
+
+        function testNewMessages() {
+            alert('📝 New Message Persistence Test:\n\n1. Go to chat page\n2. Select any user and send a new message\n3. Navigate away (Home/Browse)\n4. Return to chat page\n5. Select same user\n\nExpected:\n✅ New message appears in chat\n✅ Last message shows in user preview\n✅ Message timestamp is correct');
+        }
+
+        function testChatButtons() {
+            alert('🔗 Chat Button Integration Test:\n\n1. Go to Borrow Requests page\n2. Click "Chat with User" buttons\n3. Verify chat opens with correct user\n4. Send messages in these chats\n5. Return to chat page directly\n\nExpected:\n✅ All conversations (button + direct) appear\n✅ No duplicate users\n✅ All messages preserved');
+            window.open('/borrow-requests', '_blank');
+        }
+
+        function showFullStatus() {
+            const borrowRequests = JSON.parse(localStorage.getItem('borrowRequests') || '[]');
+            const chatUsers = JSON.parse(localStorage.getItem('chatUsers') || '[]');
+            
+            let html = '<div class="status-grid">';
+            
+            // Borrow Requests Status
+            html += '<div class="status-card">';
+            html += '<h4>📝 Borrow Requests (' + borrowRequests.length + ')</h4>';
+            borrowRequests.forEach((req, index) => {
+                html += `<div style="margin: 5px 0; padding: 8px; background: #f9f9f9; border-radius: 5px; font-size: 0.9rem;">
+                    ${index + 1}. ${req.itemTitle}<br>
+                    <small>👤 ${req.itemOwnerName} → ${req.borrowerName}</small><br>
+                    <small>📅 ${req.status}</small>
+                </div>`;
+            });
+            html += '</div>';
+
+            // Chat Users Status  
+            html += '<div class="status-card">';
+            html += '<h4>👥 Chat Users (' + chatUsers.length + ')</h4>';
+            if (chatUsers.length === 0) {
+                html += '<div class="warning">⚠️ No chat users found!<br>This means chat persistence is not working.</div>';
+            } else {
+                chatUsers.forEach((user, index) => {
+                    html += `<div style="margin: 5px 0; padding: 8px; background: #f9f9f9; border-radius: 5px; font-size: 0.9rem;">
+                        ${index + 1}. ${user.name} (${user.role})<br>
+                        <small>📦 ${user.items ? user.items.join(', ') : user.itemName}</small><br>
+                        <small>💬 ${user.lastMessage || 'No messages yet'}</small>
+                    </div>`;
+                });
+            }
+            html += '</div>';
+
+            // Messages Status
+            html += '<div class="status-card">';
+            html += '<h4>💬 Chat Conversations</h4>';
+            let totalMessages = 0;
+            let conversationCount = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('chat_')) {
+                    const messages = JSON.parse(localStorage.getItem(key) || '[]');
+                    if (messages.length > 0) {
+                        conversationCount++;
+                        totalMessages += messages.length;
+                        const otherUser = key.replace('chat_demo-user_owner_', '').replace('chat_demo-user_', '');
+                        html += `<div style="margin: 5px 0; padding: 8px; background: #f9f9f9; border-radius: 5px; font-size: 0.9rem;">
+                            ${conversationCount}. ${otherUser}<br>
+                            <small>💬 ${messages.length} messages</small><br>
+                            <small>⏰ Last: ${new Date(messages[messages.length-1]?.timestamp).toLocaleString()}</small>
+                        </div>`;
+                    }
+                }
+            }
+            html += `<div style="margin-top: 10px; font-weight: bold; color: #25D366;">
+                📊 Total: ${conversationCount} conversations, ${totalMessages} messages
+            </div>`;
+            html += '</div>';
+
+            // Test Results
+            html += '<div class="status-card">';
+            html += '<h4>🎯 Test Results</h4>';
+            const hasRequests = borrowRequests.length > 0;
+            const hasUsers = chatUsers.length > 0; 
+            const hasMessages = totalMessages > 0;
+            
+            html += `<div style="margin: 5px 0;">
+                ${hasRequests ? '✅' : '❌'} Borrow Requests: ${hasRequests ? 'Present' : 'Missing'}
+            </div>`;
+            html += `<div style="margin: 5px 0;">
+                ${hasUsers ? '✅' : '❌'} Chat Users: ${hasUsers ? 'Present' : 'Missing'}
+            </div>`;
+            html += `<div style="margin: 5px 0;">
+                ${hasMessages ? '✅' : '❌'} Messages: ${hasMessages ? 'Present' : 'Missing'}
+            </div>`;
+            
+            if (hasRequests && hasUsers && hasMessages) {
+                html += '<div class="success" style="margin-top: 10px;">🎉 All systems working! Chat persistence should work perfectly.</div>';
+            } else {
+                html += '<div class="warning" style="margin-top: 10px;">⚠️ Some data missing. Chat persistence may not work correctly.</div>';
+            }
+            html += '</div>';
+
+            html += '</div>';
+
+            document.getElementById('statusDisplay').innerHTML = html;
+        }
+
+        function clearTestData() {
+            if (confirm('🗑️ Clear all test data? This will remove all chats and requests.')) {
+                // Clear specific keys
+                const keys = ['borrowRequests', 'chatUsers', 'notifications'];
+                keys.forEach(key => localStorage.removeItem(key));
+                
+                // Clear chat conversations
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('chat_')) {
+                        localStorage.removeItem(key);
+                    }
+                }
+                
+                document.getElementById('statusDisplay').innerHTML = 
+                    '<div class="success">✅ All test data cleared!</div>';
+                    
+                document.getElementById('setupStatus').innerHTML = 
+                    '<div class="info">Ready for fresh test setup!</div>';
+            }
+        }
+
+        // Auto-run setup and status on load
+        window.onload = function() {
+            setupCompleteData();
+            setTimeout(showFullStatus, 500);
+        };
+    </script>
+</body>
+</html>

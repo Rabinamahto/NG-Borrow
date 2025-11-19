@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick Chat Setup</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; background: #25D366; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .info { background: #f0f8ff; padding: 15px; border-radius: 8px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Quick Chat Setup for NGJugaad</h1>
+    
+    <div class="info">
+        <p>This will create test data that matches your screenshot exactly!</p>
+    </div>
+
+    <button onclick="createExactData()">Create Exact Test Data</button>
+    <button onclick="openChat()">Open Chat Page</button>
+    <button onclick="clearData()">Clear All Data</button>
+
+    <div id="status"></div>
+
+    <script>
+        function createExactData() {
+            // Get current user ID from Firebase Auth or use demo-user
+            // In a real scenario, we'd get this from Firebase Auth
+            // For now, we'll create data for both scenarios
+            
+            const borrowRequests = [
+                // Scenario 1: Current user borrowed from Kajal
+                {
+                    id: 'req_flower_001',
+                    borrowRequestId: 'req_flower_001',
+                    itemId: 'item_flower_001',
+                    itemTitle: 'Flower Poster',
+                    itemImage: null,
+                    itemCategory: 'Decoration',
+                    itemOwnerId: 'kkumar124@navgurukul.org',
+                    itemOwnerName: 'Kajal Kumar',
+                    itemOwnerEmail: 'kkumar124@navgurukul.org',
+                    itemOwnerPhone: '+91 9876543210',
+                    borrowerId: 'eN82ILbv2ldCNt2beA0eadNLNXW2', // Use the actual current user ID
+                    borrowerName: 'Current User',
+                    borrowerEmail: 'currentuser@example.com',
+                    borrowerPhone: '+91 8765432109',
+                    status: 'approved',
+                    requestDate: new Date(Date.now() - 3600000).toISOString(),
+                    approvedAt: new Date(Date.now() - 1800000).toISOString()
+                },
+                // Scenario 2: Someone borrowed from current user
+                {
+                    id: 'req_lamp_002',
+                    borrowRequestId: 'req_lamp_002',
+                    itemId: 'item_lamp_002',
+                    itemTitle: 'Study Lamp',
+                    itemImage: null,
+                    itemCategory: 'Electronics',
+                    itemOwnerId: 'eN82ILbv2ldCNt2beA0eadNLNXW2', // Current user is owner
+                    itemOwnerName: 'Current User',
+                    itemOwnerEmail: 'currentuser@example.com',
+                    itemOwnerPhone: '+91 8765432109',
+                    borrowerId: 'borrower123@example.com',
+                    borrowerName: 'Another User',
+                    borrowerEmail: 'borrower123@example.com',
+                    borrowerPhone: '+91 7654321098',
+                    status: 'approved',
+                    requestDate: new Date(Date.now() - 7200000).toISOString(),
+                    approvedAt: new Date(Date.now() - 3600000).toISOString()
+                }
+            ];
+
+            // Create messages for both conversations
+            const currentUserId = 'eN82ILbv2ldCNt2beA0eadNLNXW2';
+            
+            const messages1 = [
+                {
+                    id: 'msg_001',
+                    text: 'hiii',
+                    senderId: currentUserId,
+                    senderName: 'Current User',
+                    receiverId: 'kkumar124@navgurukul.org',
+                    receiverName: 'Kajal Kumar',
+                    itemName: 'Flower Poster',
+                    timestamp: new Date(Date.now() - 1200000).toISOString(),
+                    createdAt: new Date(Date.now() - 1200000)
+                },
+                {
+                    id: 'msg_002',
+                    text: 'hello kajal',
+                    senderId: currentUserId,
+                    senderName: 'Current User',
+                    receiverId: 'kkumar124@navgurukul.org',
+                    receiverName: 'Kajal Kumar',
+                    itemName: 'Flower Poster',
+                    timestamp: new Date(Date.now() - 600000).toISOString(),
+                    createdAt: new Date(Date.now() - 600000)
+                },
+                {
+                    id: 'msg_003',
+                    text: 'hiii puja',
+                    senderId: 'kkumar124@navgurukul.org',
+                    senderName: 'Kajal Kumar',
+                    receiverId: currentUserId,
+                    receiverName: 'Current User',
+                    itemName: 'Flower Poster',
+                    timestamp: new Date().toISOString(),
+                    createdAt: new Date()
+                }
+            ];
+
+            const messages2 = [
+                {
+                    id: 'msg_101',
+                    text: 'Hi! Can I borrow your study lamp?',
+                    senderId: 'borrower123@example.com',
+                    senderName: 'Another User',
+                    receiverId: currentUserId,
+                    receiverName: 'Current User',
+                    itemName: 'Study Lamp',
+                    timestamp: new Date(Date.now() - 300000).toISOString(),
+                    createdAt: new Date(Date.now() - 300000)
+                },
+                {
+                    id: 'msg_102',
+                    text: 'Of course! When do you need it?',
+                    senderId: currentUserId,
+                    senderName: 'Current User',
+                    receiverId: 'borrower123@example.com',
+                    receiverName: 'Another User',
+                    itemName: 'Study Lamp',
+                    timestamp: new Date(Date.now() - 120000).toISOString(),
+                    createdAt: new Date(Date.now() - 120000)
+                }
+            ];
+
+            // Save to localStorage
+            localStorage.setItem('borrowRequests', JSON.stringify(borrowRequests));
+            
+            // Create chat conversations with proper sorted ID format
+            const chatId1 = `chat_${[currentUserId, 'kkumar124@navgurukul.org'].sort().join('_')}`;
+            const chatId2 = `chat_${[currentUserId, 'borrower123@example.com'].sort().join('_')}`;
+            
+            localStorage.setItem(chatId1, JSON.stringify(messages1));
+            localStorage.setItem(chatId2, JSON.stringify(messages2));
+
+            // Create chat users for immediate display
+            const chatUsers = [
+                {
+                    id: 'kkumar124@navgurukul.org',
+                    name: 'Kajal Kumar',
+                    email: 'kkumar124@navgurukul.org',
+                    phone: '+91 9876543210',
+                    itemName: 'Flower Poster',
+                    itemImage: null,
+                    itemCategory: 'Decoration',
+                    borrowRequestId: 'req_flower_001',
+                    lastSeen: 'Online',
+                    avatar: 'K',
+                    role: 'owner',
+                    items: ['Flower Poster'],
+                    lastMessage: 'hiii puja',
+                    lastMessageTime: new Date().toISOString()
+                },
+                {
+                    id: 'borrower123@example.com',
+                    name: 'Another User',
+                    email: 'borrower123@example.com',
+                    phone: '+91 7654321098',
+                    itemName: 'Study Lamp',
+                    itemImage: null,
+                    itemCategory: 'Electronics',
+                    borrowRequestId: 'req_lamp_002',
+                    lastSeen: 'Online',
+                    avatar: 'A',
+                    role: 'borrower',
+                    items: ['Study Lamp'],
+                    lastMessage: 'Of course! When do you need it?',
+                    lastMessageTime: new Date(Date.now() - 120000).toISOString()
+                }
+            ];
+            localStorage.setItem('chatUsers', JSON.stringify(chatUsers));
+
+            document.getElementById('status').innerHTML = 
+                '<div style="background: #d4edda; padding: 15px; border-radius: 8px; color: #155724; margin: 10px 0;">' +
+                '✅ Comprehensive test data created!<br>' +
+                '📱 2 Borrow Requests:<br>' +
+                '&nbsp;&nbsp;• Flower Poster from Kajal Kumar (you borrowed)<br>' +
+                '&nbsp;&nbsp;• Study Lamp to Another User (you lent)<br>' +
+                '💬 2 Chat conversations with messages<br>' +
+                '� 2 Chat Users ready to display<br>' +
+                '<strong>Now click "Open Chat Page" to see both chats!</strong>' +
+                '</div>';
+        }
+
+        function openChat() {
+            window.open('/chat', '_blank');
+        }
+
+        function clearData() {
+            const keys = ['borrowRequests', 'chatUsers'];
+            keys.forEach(key => localStorage.removeItem(key));
+            
+            // Clear chat messages
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('chat_')) {
+                    localStorage.removeItem(key);
+                }
+            }
+            
+            document.getElementById('status').innerHTML = 
+                '<div style="background: #f8d7da; padding: 15px; border-radius: 8px; color: #721c24; margin: 10px 0;">' +
+                '🗑️ All data cleared!' +
+                '</div>';
+        }
+
+        // Show current data status
+        function checkCurrentData() {
+            const borrowRequests = localStorage.getItem('borrowRequests');
+            const chatUsers = localStorage.getItem('chatUsers');
+            let chatMessages = 0;
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('chat_')) {
+                    chatMessages++;
+                }
+            }
+
+            let status = '<h3>Current Data Status:</h3>';
+            status += '<p>📋 Borrow Requests: ' + (borrowRequests ? 'Present' : 'None') + '</p>';
+            status += '<p>👥 Chat Users: ' + (chatUsers ? 'Present' : 'None') + '</p>';
+            status += '<p>💬 Chat Conversations: ' + chatMessages + '</p>';
+            
+            document.getElementById('status').innerHTML = status;
+        }
+
+        // Auto-check on load
+        window.onload = checkCurrentData;
+    </script>
+</body>
+</html>

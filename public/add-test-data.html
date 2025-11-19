@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Test Chat Data</title>
+</head>
+<body>
+    <h1>Adding Test Chat Data...</h1>
+    <script>
+        // Add some test borrow requests to see chat working
+        const testRequests = [
+            {
+                id: 'req1',
+                itemId: 'item1',
+                itemName: 'MacBook Pro',
+                itemImage: 'https://via.placeholder.com/100x100?text=MacBook',
+                ownerId: 'demo-user',
+                ownerName: 'You',
+                ownerEmail: 'you@example.com',
+                requesterId: 'user456',
+                requesterName: 'Jane Smith', 
+                requesterEmail: 'jane@example.com',
+                status: 'approved',
+                timestamp: new Date().toISOString()
+            },
+            {
+                id: 'req2',
+                itemId: 'item2',
+                itemName: 'Gaming Console',
+                itemImage: 'https://via.placeholder.com/100x100?text=Console',
+                ownerId: 'user789',
+                ownerName: 'John Doe',
+                ownerEmail: 'john@example.com',
+                requesterId: 'demo-user',
+                requesterName: 'You',
+                requesterEmail: 'you@example.com',
+                status: 'approved', 
+                timestamp: new Date().toISOString()
+            },
+            {
+                id: 'req3',
+                itemId: 'item3',
+                itemName: 'Camera',
+                itemImage: 'https://via.placeholder.com/100x100?text=Camera',
+                ownerId: 'user123',
+                ownerName: 'Alice Johnson',
+                ownerEmail: 'alice@example.com',
+                requesterId: 'demo-user',
+                requesterName: 'You',
+                requesterEmail: 'you@example.com',
+                status: 'approved', 
+                timestamp: new Date().toISOString()
+            }
+        ];
+
+        localStorage.setItem('borrowRequests', JSON.stringify(testRequests));
+        
+        console.log('Test chat data added!');
+        alert('Test chat data added! Now you can see users in chat.');
+        
+        // Redirect to chat page
+        window.location.href = '/#/chat';
+    </script>
+</body>
+</html>

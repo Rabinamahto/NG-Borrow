@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Chat Data</title>
+</head>
+<body>
+    <h1>Creating Test Chat Data...</h1>
+    <script>
+        // Create some test approved borrow requests for chat testing
+        const testData = [
+            {
+                id: 'req_001',
+                borrowRequestId: 'req_001',
+                itemId: 'item_001',
+                itemTitle: 'MacBook Pro 2023',
+                itemCategory: 'Electronics',
+                itemImage: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400',
+                itemOwnerId: 'owner_001',
+                itemOwnerName: 'Priya Sharma',
+                itemOwnerEmail: 'priya@example.com',
+                itemOwnerPhone: '+91 98765 43210',
+                borrowerId: 'demo-user',
+                borrowerName: 'You (Demo User)',
+                borrowerEmail: 'demo@example.com',
+                borrowerPhone: '+91 98765 43211',
+                status: 'approved',
+                message: 'Need for coding project',
+                borrowDuration: '1 week',
+                createdAt: new Date().toISOString(),
+                approvedAt: new Date().toISOString()
+            },
+            {
+                id: 'req_002',
+                borrowRequestId: 'req_002',
+                itemId: 'item_002',
+                itemTitle: 'DSLR Camera Canon',
+                itemCategory: 'Photography',
+                itemImage: 'https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=400',
+                itemOwnerId: 'demo-user',
+                itemOwnerName: 'You (Demo User)',
+                itemOwnerEmail: 'demo@example.com',
+                itemOwnerPhone: '+91 98765 43211',
+                borrowerId: 'borrower_001',
+                borrowerName: 'Amit Kumar',
+                borrowerEmail: 'amit@example.com',
+                borrowerPhone: '+91 98765 43212',
+                status: 'approved',
+                message: 'Need for wedding photography',
+                borrowDuration: '3 days',
+                createdAt: new Date().toISOString(),
+                approvedAt: new Date().toISOString()
+            },
+            {
+                id: 'req_003',
+                borrowRequestId: 'req_003',
+                itemId: 'item_003',
+                itemTitle: 'Guitar - Yamaha F310',
+                itemCategory: 'Musical Instruments',
+                itemImage: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400',
+                itemOwnerId: 'owner_003',
+                itemOwnerName: 'Rahul Singh',
+                itemOwnerEmail: 'rahul@example.com',
+                itemOwnerPhone: '+91 98765 43213',
+                borrowerId: 'demo-user',
+                borrowerName: 'You (Demo User)',
+                borrowerEmail: 'demo@example.com',
+                borrowerPhone: '+91 98765 43211',
+                status: 'approved',
+                message: 'Learning music for hobby',
+                borrowDuration: '2 weeks',
+                createdAt: new Date().toISOString(),
+                approvedAt: new Date().toISOString()
+            }
+        ];
+
+        // Save to localStorage
+        localStorage.setItem('borrowRequests', JSON.stringify(testData));
+        
+        // Also create some test messages
+        const chatMessages = {
+            'chat_demo-user_owner_001': [
+                {
+                    id: 'msg_001',
+                    text: 'Hi! Thanks for approving my MacBook request 😊',
+                    senderId: 'demo-user',
+                    senderName: 'You',
+                    timestamp: new Date(Date.now() - 3600000).toISOString(),
+                    read: true
+                },
+                {
+                    id: 'msg_002', 
+                    text: 'No problem! When do you need it?',
+                    senderId: 'owner_001',
+                    senderName: 'Priya Sharma',
+                    timestamp: new Date(Date.now() - 3000000).toISOString(),
+                    read: true
+                },
+                {
+                    id: 'msg_003',
+                    text: 'Tomorrow morning would be great if possible',
+                    senderId: 'demo-user',
+                    senderName: 'You',
+                    timestamp: new Date(Date.now() - 1800000).toISOString(),
+                    read: true
+                }
+            ],
+            'chat_borrower_001_demo-user': [
+                {
+                    id: 'msg_101',
+                    text: 'Hey! I got your camera approval notification',
+                    senderId: 'borrower_001',
+                    senderName: 'Amit Kumar',
+                    timestamp: new Date(Date.now() - 2400000).toISOString(),
+                    read: true
+                },
+                {
+                    id: 'msg_102',
+                    text: 'Great! When do you need the camera?',
+                    senderId: 'demo-user', 
+                    senderName: 'You',
+                    timestamp: new Date(Date.now() - 1200000).toISOString(),
+                    read: true
+                }
+            ]
+        };
+
+        // Save test messages
+        Object.keys(chatMessages).forEach(chatKey => {
+            localStorage.setItem(chatKey, JSON.stringify(chatMessages[chatKey]));
+        });
+
+        console.log('✅ Test chat data created successfully!');
+        alert('Test chat data created! Now you can test the WhatsApp-style chat.\n\nGo to: localhost:5177/chat');
+        
+        // Redirect to chat page
+        setTimeout(() => {
+            window.location.href = '/#/chat';
+        }, 2000);
+    </script>
+</body>
+</html>

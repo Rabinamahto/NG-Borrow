@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Chat Data</title>
+</head>
+<body>
+    <h1>Debug Chat Data</h1>
+    <div id="output"></div>
+    
+    <script>
+        function debugChatData() {
+            console.log('=== DEBUG CHAT DATA ===');
+            
+            // Check borrowRequests
+            const borrowRequestsJSON = localStorage.getItem('borrowRequests');
+            const borrowRequests = borrowRequestsJSON ? JSON.parse(borrowRequestsJSON) : [];
+            
+            console.log('All borrowRequests:', borrowRequests);
+            console.log('Total requests:', borrowRequests.length);
+            
+            // Find approved requests
+            const approvedRequests = borrowRequests.filter(req => req.status === 'approved');
+            console.log('Approved requests:', approvedRequests);
+            console.log('Approved count:', approvedRequests.length);
+            
+            // Check current user
+            const currentUserId = 'demo-user'; // Fallback for testing
+            console.log('Current user ID:', currentUserId);
+            
+            // Find chat eligible requests
+            const eligibleRequests = approvedRequests.filter(req => 
+                req.borrowerId === currentUserId || req.itemOwnerId === currentUserId
+            );
+            console.log('Chat eligible requests:', eligibleRequests);
+            
+            // Display results
+            const output = document.getElementById('output');
+            output.innerHTML = `
+                <h3>Debug Results:</h3>
+                <p><strong>Total Requests:</strong> ${borrowRequests.length}</p>
+                <p><strong>Approved Requests:</strong> ${approvedRequests.length}</p>
+                <p><strong>Eligible for Chat:</strong> ${eligibleRequests.length}</p>
+                <p><strong>Current User:</strong> ${currentUserId}</p>
+                
+                <h4>Approved Requests Details:</h4>
+                <pre>${JSON.stringify(approvedRequests, null, 2)}</pre>
+                
+                <h4>All Requests:</h4>
+                <pre>${JSON.stringify(borrowRequests, null, 2)}</pre>
+            `;
+        }
+        
+        // Run debug on load
+        debugChatData();
+        
+        // Also create some test data if none exists
+        const existingRequests = JSON.parse(localStorage.getItem('borrowRequests') || '[]');
+        if (existingRequests.length === 0) {
+            console.log('Creating test data...');
+            
+            const testRequests = [
+                {
+                    id: 'req_001',
+                    borrowRequestId: 'req_001',
+                    itemId: 'item_001',
+                    itemTitle: 'Smart Watch',
+                    itemCategory: 'Electronics',
+                    itemImage: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
+                    itemOwnerId: 'demo-user', // Current user as owner
+                    itemOwnerName: 'You (Demo User)',
+                    itemOwnerEmail: 'demo@example.com',
+                    itemOwnerPhone: '+91 98765 43210',
+                    borrowerId: 'nisha_001',
+                    borrowerName: 'Nisha',
+                    borrowerEmail: 'nisha@example.com',
+                    borrowerPhone: '+91 98765 43211',
+                    status: 'approved',
+                    message: 'I want',
+                    borrowDuration: '1 week',
+                    createdAt: new Date(Date.now() - 86400000).toISOString(),
+                    approvedAt: new Date().toISOString()
+                },
+                {
+                    id: 'req_002',
+                    borrowRequestId: 'req_002',
+                    itemId: 'item_002', 
+                    itemTitle: 'MacBook Pro 2023',
+                    itemCategory: 'Electronics',
+                    itemImage: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400',
+                    itemOwnerId: 'ruchi_001',
+                    itemOwnerName: 'Ruchi Shah',
+                    itemOwnerEmail: 'ruchi@example.com',
+                    itemOwnerPhone: '+91 98765 43212',
+                    borrowerId: 'demo-user', // Current user as borrower
+                    borrowerName: 'You (Demo User)',
+                    borrowerEmail: 'demo@example.com', 
+                    borrowerPhone: '+91 98765 43210',
+                    status: 'approved',
+                    message: 'Need for project work',
+                    borrowDuration: '2 weeks',
+                    createdAt: new Date(Date.now() - 172800000).toISOString(),
+                    approvedAt: new Date(Date.now() - 3600000).toISOString()
+                }
+            ];
+            
+            localStorage.setItem('borrowRequests', JSON.stringify(testRequests));
+            console.log('Test data created:', testRequests);
+            
+            // Run debug again
+            setTimeout(debugChatData, 100);
+        }
+    </script>
+</body>
+</html>

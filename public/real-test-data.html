@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Real Test Data</title>
+</head>
+<body>
+    <h1>Creating Real Borrow Requests Test Data...</h1>
+    <script>
+        // Simulate current user
+        const currentUser = 'demo-user'; // This should match your actual logged-in user ID
+        
+        // Create test borrow requests with proper structure matching your app
+        const realBorrowRequests = [
+            {
+                id: 'req_001',
+                borrowRequestId: 'req_001',
+                itemId: 'item_bag_001',
+                itemTitle: 'Bag',
+                itemDescription: 'Good For carry things',
+                itemCategory: 'Home & Kitchen',
+                itemCondition: 'Good',
+                itemImage: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400',
+                
+                // Item owner details
+                itemOwnerId: currentUser, // You are the owner
+                itemOwnerName: 'You (Demo User)',
+                itemOwnerEmail: 'demo@example.com',
+                
+                // Borrower details (Puja who requested)
+                borrowerId: 'user_puja_001',
+                borrowerName: 'Puja',
+                borrowerEmail: 'puja@gmail.com', 
+                borrowerPhone: '2345678798',
+                
+                // Request details
+                message: 'I need this because I will go home',
+                borrowDuration: '1 week',
+                borrowDate: '',
+                returnDate: '',
+                
+                // Status and timestamps
+                status: 'approved', // This makes chat available
+                createdAt: '2025-10-23T10:00:00.000Z',
+                approvedAt: new Date().toISOString(),
+                approvedBy: currentUser,
+                
+                timestamp: new Date().toISOString()
+            },
+            {
+                id: 'req_002',
+                borrowRequestId: 'req_002', 
+                itemId: 'item_camera_002',
+                itemTitle: 'DSLR Camera',
+                itemDescription: 'Professional photography camera',
+                itemCategory: 'Electronics',
+                itemCondition: 'Excellent',
+                itemImage: 'https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=400',
+                
+                // Item owner details (someone else's camera)
+                itemOwnerId: 'owner_camera_001',
+                itemOwnerName: 'Rohit Photography',
+                itemOwnerEmail: 'rohit@example.com',
+                
+                // You are the borrower
+                borrowerId: currentUser,
+                borrowerName: 'You (Demo User)',
+                borrowerEmail: 'demo@example.com',
+                borrowerPhone: '9876543210',
+                
+                message: 'Need for wedding photography this weekend',
+                borrowDuration: '3 days',
+                borrowDate: '2025-10-25',
+                returnDate: '2025-10-28',
+                
+                status: 'approved',
+                createdAt: '2025-10-22T15:30:00.000Z',
+                approvedAt: new Date().toISOString(),
+                approvedBy: 'owner_camera_001',
+                
+                timestamp: new Date().toISOString()
+            }
+        ];
+
+        // Clear existing data and set new
+        localStorage.removeItem('borrowRequests');
+        localStorage.setItem('borrowRequests', JSON.stringify(realBorrowRequests));
+
+        // Create some initial chat messages
+        const chatMessages = {
+            // Chat between you (owner) and Puja (borrower) about the bag
+            'chat_demo-user_user_puja_001': [
+                {
+                    id: 'msg_001',
+                    text: 'Hi! Thanks for approving my bag request! 😊',
+                    senderId: 'user_puja_001',
+                    senderName: 'Puja',
+                    receiverId: currentUser,
+                    receiverName: 'You',
+                    timestamp: new Date(Date.now() - 1800000).toISOString(),
+                    read: false
+                },
+                {
+                    id: 'msg_002',
+                    text: 'You are welcome! When do you need it?',
+                    senderId: currentUser,
+                    senderName: 'You', 
+                    receiverId: 'user_puja_001',
+                    receiverName: 'Puja',
+                    timestamp: new Date(Date.now() - 1200000).toISOString(),
+                    read: true
+                }
+            ],
+            
+            // Chat between you (borrower) and Rohit (camera owner) 
+            'chat_demo-user_owner_camera_001': [
+                {
+                    id: 'msg_101',
+                    text: 'Thank you for approving my camera request!',
+                    senderId: currentUser,
+                    senderName: 'You',
+                    receiverId: 'owner_camera_001', 
+                    receiverName: 'Rohit Photography',
+                    timestamp: new Date(Date.now() - 2400000).toISOString(),
+                    read: true
+                },
+                {
+                    id: 'msg_102',
+                    text: 'No problem! The camera is ready for pickup. When can you come?',
+                    senderId: 'owner_camera_001',
+                    senderName: 'Rohit Photography',
+                    receiverId: currentUser,
+                    receiverName: 'You',
+                    timestamp: new Date(Date.now() - 1800000).toISOString(),
+                    read: false
+                }
+            ]
+        };
+
+        // Save chat messages
+        Object.keys(chatMessages).forEach(chatKey => {
+            localStorage.setItem(chatKey, JSON.stringify(chatMessages[chatKey]));
+        });
+
+        // Create some notifications
+        const notifications = [
+            {
+                id: 'notif_001',
+                title: 'Request Approved: Bag',
+                message: 'Great news! You have approved Puja\'s request to borrow "Bag"',
+                type: 'approval',
+                isNew: true,
+                time: '30 min ago',
+                timestamp: new Date(Date.now() - 1800000).toISOString()
+            },
+            {
+                id: 'notif_002', 
+                title: 'Request Approved: DSLR Camera',
+                message: 'Great news! Rohit Photography has approved your request to borrow "DSLR Camera"',
+                type: 'approval',
+                isNew: true,
+                time: '1 hour ago',
+                timestamp: new Date(Date.now() - 3600000).toISOString()
+            }
+        ];
+
+        localStorage.setItem('notifications', JSON.stringify(notifications));
+
+        console.log('✅ Real test data created!');
+        console.log('Borrow Requests:', realBorrowRequests);
+        console.log('Chat Messages:', chatMessages);
+
+        alert('✅ Real test data created!\n\n📱 Now go to:\n• Requests page - you will see approved requests\n• Click "Chat with Puja" button\n• Chat page will open with Puja selected\n• Send messages to test!');
+
+        // Auto redirect to requests page
+        setTimeout(() => {
+            window.location.href = '/#/borrow-requests';
+        }, 3000);
+    </script>
+</body>
+</html>

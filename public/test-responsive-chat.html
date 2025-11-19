@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Responsive Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #25D366;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 2px solid #25D366;
+            border-radius: 15px;
+            background: #f8fff8;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #128C7E;
+            font-size: 1.4rem;
+            border-bottom: 2px solid #25D366;
+            padding-bottom: 10px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .test-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .test-card h4 {
+            margin-top: 0;
+            color: #25D366;
+            font-size: 1.1rem;
+        }
+        button {
+            background: linear-gradient(135deg, #25D366 0%, #20BF5F 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 8px 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+            background: linear-gradient(135deg, #20BF5F 0%, #25D366 100%);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .success {
+            color: #25D366;
+            font-weight: bold;
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #25D366;
+            margin: 15px 0;
+        }
+        .info {
+            background: linear-gradient(135deg, #e7f3ff 0%, #f0f8ff 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border-left: 5px solid #2196F3;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-left: 5px solid #25D366;
+            border-radius: 8px;
+        }
+        .responsive-demo {
+            background: #fff;
+            border: 2px solid #25D366;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .device-frame {
+            border: 3px solid #333;
+            border-radius: 15px;
+            padding: 10px;
+            background: #000;
+            display: inline-block;
+            margin: 10px;
+        }
+        .mobile-frame {
+            width: 200px;
+            height: 360px;
+            border-radius: 25px;
+        }
+        .tablet-frame {
+            width: 300px;
+            height: 200px;
+            border-radius: 15px;
+        }
+        .desktop-frame {
+            width: 400px;
+            height: 250px;
+            border-radius: 10px;
+        }
+        .emoji {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 20px;
+            }
+            .header h1 {
+                font-size: 2rem;
+            }
+            .test-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 Responsive Chat Test Suite</h1>
+            <p>Complete testing for mobile, tablet, and desktop chat experience</p>
+        </div>
+
+        <div class="section">
+            <h3>🚀 Quick Setup</h3>
+            <div class="test-grid">
+                <div class="test-card">
+                    <h4>1. Create Test Data</h4>
+                    <p>Setup multiple chat users and conversations</p>
+                    <button onclick="setupCompleteTestData()">Setup All Data</button>
+                    <div id="setupStatus"></div>
+                </div>
+                <div class="test-card">
+                    <h4>2. Open Chat</h4>
+                    <p>Test the responsive chat interface</p>
+                    <button onclick="openChatPage()">Open Chat Page</button>
+                    <button onclick="openInNewWindow()">Open in New Window</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📱 Mobile Responsiveness Tests</h3>
+            <div class="info">
+                <strong>🎯 Mobile Test Checklist:</strong><br>
+                <span class="emoji">✅</span> Left sidebar shows full width on mobile<br>
+                <span class="emoji">✅</span> Back button appears when in chat<br>
+                <span class="emoji">✅</span> Smooth transition between list and chat<br>
+                <span class="emoji">✅</span> Context menu positions correctly<br>
+                <span class="emoji">✅</span> Messages wrap properly on small screens
+            </div>
+            
+            <div class="test-grid">
+                <div class="test-card">
+                    <h4>Mobile View Test</h4>
+                    <p>Resize browser to mobile width (< 768px)</p>
+                    <button onclick="simulateMobile()">Simulate Mobile</button>
+                </div>
+                <div class="test-card">
+                    <h4>Context Menu Test</h4>
+                    <p>Right-click messages on different screen sizes</p>
+                    <button onclick="testContextMenu()">Test Instructions</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🔄 Chat Persistence Tests</h3>
+            <div class="test-grid">
+                <div class="test-card">
+                    <h4>Refresh Test</h4>
+                    <p>Chat users should persist after page refresh</p>
+                    <button onclick="testRefresh()">Test Refresh</button>
+                </div>
+                <div class="test-card">
+                    <h4>Navigation Test</h4>
+                    <p>Go to other pages and return to chat</p>
+                    <button onclick="testNavigation()">Test Navigation</button>
+                </div>
+                <div class="test-card">
+                    <h4>Direct Chat Access</h4>
+                    <p>Access chat page directly without URL params</p>
+                    <button onclick="testDirectAccess()">Test Direct Access</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🖱️ Enhanced Context Menu Tests</h3>
+            <div class="info">
+                <strong>🎯 New Context Menu Features:</strong><br>
+                <span class="emoji">📋</span> <strong>Copy:</strong> Copy message text to clipboard<br>
+                <span class="emoji">✏️</span> <strong>Edit:</strong> Edit your own messages inline<br>
+                <span class="emoji">🗑️</span> <strong>Delete for Everyone:</strong> Remove message for all users<br>
+                <span class="emoji">🚮</span> <strong>Delete for Me:</strong> Remove from your view only
+            </div>
+            
+            <div class="test-grid">
+                <div class="test-card">
+                    <h4>Add Test Messages</h4>
+                    <p>Create messages to test context menu</p>
+                    <button onclick="addTestMessages()">Add Messages</button>
+                </div>
+                <div class="test-card">
+                    <h4>Test Right-Click</h4>
+                    <p>Right-click on messages to test all options</p>
+                    <button onclick="showContextInstructions()">Show Instructions</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>👥 Multiple User Chat Test</h3>
+            <div class="test-grid">
+                <div class="test-card">
+                    <h4>Same User Multiple Items</h4>
+                    <p>Test consolidated chat for same user</p>
+                    <button onclick="createMultipleItemRequests()">Create Test</button>
+                </div>
+                <div class="test-card">
+                    <h4>Chat Button Integration</h4>
+                    <p>Test chat buttons from request page</p>
+                    <button onclick="openBorrowRequests()">Open Requests</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📊 Current System Status</h3>
+            <button onclick="showSystemStatus()">Show Full Status</button>
+            <button onclick="clearAllTestData()">Clear All Data</button>
+            <button onclick="exportTestData()">Export Test Data</button>
+            <div id="systemStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        function setupCompleteTestData() {
+            // Create comprehensive test data
+            const borrowRequests = [
+                {
+                    id: 'req_mobile_001',
+                    borrowRequestId: 'req_mobile_001',
+                    itemId: 'item_mobile_001',
+                    itemTitle: 'Gaming Laptop RTX 4080',
+                    itemImage: 'https://via.placeholder.com/200x150/25D366/FFFFFF?text=Laptop',
+                    itemCategory: 'Electronics',
+                    itemOwnerId: 'owner_rajesh',
+                    itemOwnerName: 'Rajesh Kumar',
+                    itemOwnerEmail: 'rajesh@ngjugaad.com',
+                    itemOwnerPhone: '+91 9876543210',
+                    borrowerId: 'demo-user',
+                    borrowerName: 'Demo User',
+                    borrowerEmail: 'demo@ngjugaad.com',
+                    borrowerPhone: '+91 8765432109',
+                    status: 'approved',
+                    requestDate: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+                    approvedAt: new Date(Date.now() - 3600000).toISOString() // 1 hour ago
+                },
+                {
+                    id: 'req_mobile_002',
+                    borrowRequestId: 'req_mobile_002',
+                    itemId: 'item_mobile_002',
+                    itemTitle: 'DSLR Camera Canon 5D',
+                    itemImage: 'https://via.placeholder.com/200x150/128C7E/FFFFFF?text=Camera',
+                    itemCategory: 'Electronics',
+                    itemOwnerId: 'owner_rajesh', // Same owner
+                    itemOwnerName: 'Rajesh Kumar',
+                    itemOwnerEmail: 'rajesh@ngjugaad.com',
+                    itemOwnerPhone: '+91 9876543210',
+                    borrowerId: 'demo-user',
+                    borrowerName: 'Demo User',
+                    borrowerEmail: 'demo@ngjugaad.com',
+                    borrowerPhone: '+91 8765432109',
+                    status: 'approved',
+                    requestDate: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+                    approvedAt: new Date(Date.now() - 7200000).toISOString() // 2 hours ago
+                },
+                {
+                    id: 'req_mobile_003',
+                    borrowRequestId: 'req_mobile_003',
+                    itemId: 'item_mobile_003',
+                    itemTitle: 'Power Drill Bosch Professional',
+                    itemImage: 'https://via.placeholder.com/200x150/FF5722/FFFFFF?text=Drill',
+                    itemCategory: 'Tools',
+                    itemOwnerId: 'owner_priya',
+                    itemOwnerName: 'Priya Sharma',
+                    itemOwnerEmail: 'priya@ngjugaad.com',
+                    itemOwnerPhone: '+91 7654321098',
+                    borrowerId: 'demo-user',
+                    borrowerName: 'Demo User',
+                    borrowerEmail: 'demo@ngjugaad.com',
+                    borrowerPhone: '+91 8765432109',
+                    status: 'approved',
+                    requestDate: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+                    approvedAt: new Date(Date.now() - 10800000).toISOString() // 3 hours ago
+                },
+                {
+                    id: 'req_mobile_004',
+                    borrowRequestId: 'req_mobile_004',
+                    itemId: 'item_mobile_004',
+                    itemTitle: 'Bluetooth Speaker JBL',
+                    itemImage: 'https://via.placeholder.com/200x150/9C27B0/FFFFFF?text=Speaker',
+                    itemCategory: 'Electronics',
+                    itemOwnerId: 'owner_amit',
+                    itemOwnerName: 'Amit Patel',
+                    itemOwnerEmail: 'amit@ngjugaad.com',
+                    itemOwnerPhone: '+91 6543210987',
+                    borrowerId: 'demo-user',
+                    borrowerName: 'Demo User',
+                    borrowerEmail: 'demo@ngjugaad.com',
+                    borrowerPhone: '+91 8765432109',
+                    status: 'approved',
+                    requestDate: new Date().toISOString(),
+                    approvedAt: new Date().toISOString()
+                }
+            ];
+
+            localStorage.setItem('borrowRequests', JSON.stringify(borrowRequests));
+            
+            // Create initial chat messages
+            addTestMessages();
+
+            document.getElementById('setupStatus').innerHTML = 
+                '<div class="success">✅ Complete test data created!<br>' +
+                '📱 4 approved requests<br>' +
+                '👥 3 different chat users<br>' +
+                '💬 Pre-loaded conversations</div>';
+        }
+
+        function addTestMessages() {
+            const conversations = [
+                {
+                    chatId: 'chat_demo-user_owner_rajesh',
+                    messages: [
+                        {
+                            id: 'msg_responsive_001',
+                            text: 'Hi Rajesh! Thanks for approving both my requests 😊',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_rajesh',
+                            receiverName: 'Rajesh Kumar',
+                            timestamp: new Date(Date.now() - 7200000).toISOString(),
+                            createdAt: new Date(Date.now() - 7200000)
+                        },
+                        {
+                            id: 'msg_responsive_002',
+                            text: 'Welcome! Both the laptop and camera are ready for pickup. The laptop has the latest games installed.',
+                            senderId: 'owner_rajesh',
+                            senderName: 'Rajesh Kumar',
+                            receiverId: 'demo-user',
+                            receiverName: 'Demo User',
+                            timestamp: new Date(Date.now() - 6600000).toISOString(),
+                            createdAt: new Date(Date.now() - 6600000)
+                        },
+                        {
+                            id: 'msg_responsive_003',
+                            text: 'Awesome! What time works best for you? I can come anytime after 5 PM.',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_rajesh',
+                            receiverName: 'Rajesh Kumar',
+                            timestamp: new Date(Date.now() - 6000000).toISOString(),
+                            createdAt: new Date(Date.now() - 6000000)
+                        },
+                        {
+                            id: 'msg_responsive_004',
+                            text: 'Perfect! 6 PM works great. I\'ll have everything ready. Don\'t forget to bring your ID for verification.',
+                            senderId: 'owner_rajesh',
+                            senderName: 'Rajesh Kumar',
+                            receiverId: 'demo-user',
+                            receiverName: 'Demo User',
+                            timestamp: new Date(Date.now() - 5400000).toISOString(),
+                            createdAt: new Date(Date.now() - 5400000)
+                        },
+                        {
+                            id: 'msg_responsive_005',
+                            text: 'Great! See you at 6. Thanks again for being so helpful! 🙏',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_rajesh',
+                            receiverName: 'Rajesh Kumar',
+                            timestamp: new Date(Date.now() - 4800000).toISOString(),
+                            createdAt: new Date(Date.now() - 4800000)
+                        }
+                    ]
+                },
+                {
+                    chatId: 'chat_demo-user_owner_priya',
+                    messages: [
+                        {
+                            id: 'msg_responsive_101',
+                            text: 'Hi Priya! Excited to try out the power drill for my home project 🔨',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_priya',
+                            receiverName: 'Priya Sharma',
+                            timestamp: new Date(Date.now() - 10800000).toISOString(),
+                            createdAt: new Date(Date.now() - 10800000)
+                        },
+                        {
+                            id: 'msg_responsive_102',
+                            text: 'That\'s great! The drill is in excellent condition. I\'ve included extra drill bits and a user manual. Are you familiar with power tools?',
+                            senderId: 'owner_priya',
+                            senderName: 'Priya Sharma',
+                            receiverId: 'demo-user',
+                            receiverName: 'Demo User',
+                            timestamp: new Date(Date.now() - 9600000).toISOString(),
+                            createdAt: new Date(Date.now() - 9600000)
+                        },
+                        {
+                            id: 'msg_responsive_103',
+                            text: 'I have some experience but not with professional grade tools. Any safety tips?',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_priya',
+                            receiverName: 'Priya Sharma',
+                            timestamp: new Date(Date.now() - 8400000).toISOString(),
+                            createdAt: new Date(Date.now() - 8400000)
+                        },
+                        {
+                            id: 'msg_responsive_104',
+                            text: 'Always wear safety glasses and gloves. Start with lower speed settings. I\'ll show you when you pick it up! 👷‍♀️',
+                            senderId: 'owner_priya',
+                            senderName: 'Priya Sharma',
+                            receiverId: 'demo-user',
+                            receiverName: 'Demo User',
+                            timestamp: new Date(Date.now() - 7200000).toISOString(),
+                            createdAt: new Date(Date.now() - 7200000)
+                        }
+                    ]
+                },
+                {
+                    chatId: 'chat_demo-user_owner_amit',
+                    messages: [
+                        {
+                            id: 'msg_responsive_201',
+                            text: 'Hey Amit! Just approved my request for the JBL speaker! 🔊',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_amit',
+                            receiverName: 'Amit Patel',
+                            timestamp: new Date(Date.now() - 1800000).toISOString(),
+                            createdAt: new Date(Date.now() - 1800000)
+                        },
+                        {
+                            id: 'msg_responsive_202',
+                            text: 'Yes! Perfect timing. I was just cleaning it up for you. The sound quality is amazing - perfect for parties! 🎵',
+                            senderId: 'owner_amit',
+                            senderName: 'Amit Patel',
+                            receiverId: 'demo-user',
+                            receiverName: 'Demo User',
+                            timestamp: new Date(Date.now() - 1200000).toISOString(),
+                            createdAt: new Date(Date.now() - 1200000)
+                        }
+                    ]
+                }
+            ];
+
+            // Save all conversations to localStorage
+            conversations.forEach(conv => {
+                localStorage.setItem(conv.chatId, JSON.stringify(conv.messages));
+            });
+
+            if (document.getElementById('setupStatus')) {
+                document.getElementById('setupStatus').innerHTML += 
+                    '<br><div class="success">💬 Test conversations added!</div>';
+            }
+        }
+
+        function openChatPage() {
+            window.open('/chat', '_blank');
+        }
+
+        function openInNewWindow() {
+            const newWindow = window.open('/chat', 'chatWindow', 'width=800,height=600');
+            if (newWindow) {
+                newWindow.focus();
+            }
+        }
+
+        function simulateMobile() {
+            alert('📱 To simulate mobile:\n\n1. Press F12 to open DevTools\n2. Click the device toggle button (📱)\n3. Select a mobile device or set width < 768px\n4. Refresh the chat page\n\n✅ Test: Back button should appear in chat header');
+        }
+
+        function testContextMenu() {
+            alert('🖱️ Context Menu Tests:\n\n1. Go to chat page\n2. Right-click on any message\n3. Verify menu appears correctly positioned\n4. Test on mobile (long press on message)\n\n✅ Check: Menu should not go off-screen\n✅ Check: All options should work properly');
+        }
+
+        function testRefresh() {
+            alert('🔄 Refresh Test:\n\n1. Go to chat page\n2. Select a user and send a message\n3. Press F5 to refresh\n4. Verify users still appear in sidebar\n5. Verify chat history is preserved\n\n✅ Expected: All data should persist');
+        }
+
+        function testNavigation() {
+            alert('🧭 Navigation Test:\n\n1. Go to chat page\n2. Navigate to Home page\n3. Navigate to Browse Items\n4. Return to Chat page\n\n✅ Expected: Chat users should load automatically');
+        }
+
+        function testDirectAccess() {
+            alert('🎯 Direct Access Test:\n\n1. Open chat page directly (not via button)\n2. Check if users appear in sidebar\n3. Try selecting a user\n\n✅ Expected: Should work without URL parameters');
+        }
+
+        function showContextInstructions() {
+            alert('🖱️ Enhanced Context Menu Instructions:\n\n📋 COPY: Right-click → Copy → Check clipboard\n✏️ EDIT: Right-click your message → Edit → Modify text → Save/Cancel\n🗑️ DELETE FOR EVERYONE: Right-click your message → Delete for Everyone\n🚮 DELETE FOR ME: Right-click any message → Delete for Me\n\n✅ Test all options on both mobile and desktop!');
+        }
+
+        function createMultipleItemRequests() {
+            const existingRequests = JSON.parse(localStorage.getItem('borrowRequests') || '[]');
+            
+            // Add more items from same user to test consolidation
+            const additionalRequests = [
+                {
+                    id: 'req_consolidation_001',
+                    borrowRequestId: 'req_consolidation_001',
+                    itemId: 'item_consolidation_001',
+                    itemTitle: 'MacBook Pro M3',
+                    itemImage: 'https://via.placeholder.com/200x150/007AFF/FFFFFF?text=MacBook',
+                    itemCategory: 'Electronics',
+                    itemOwnerId: 'owner_rajesh', // Same owner as existing
+                    itemOwnerName: 'Rajesh Kumar',
+                    itemOwnerEmail: 'rajesh@ngjugaad.com',
+                    itemOwnerPhone: '+91 9876543210',
+                    borrowerId: 'demo-user',
+                    borrowerName: 'Demo User',
+                    borrowerEmail: 'demo@ngjugaad.com',
+                    borrowerPhone: '+91 8765432109',
+                    status: 'approved',
+                    requestDate: new Date().toISOString(),
+                    approvedAt: new Date().toISOString()
+                }
+            ];
+
+            const allRequests = [...existingRequests, ...additionalRequests];
+            localStorage.setItem('borrowRequests', JSON.stringify(allRequests));
+
+            alert('✅ Multiple Items Test Created!\n\n📱 Now Rajesh Kumar has 3 items approved for same user\n🔗 All should show in single chat conversation\n\n📋 Test: Go to Borrow Requests → Click "Chat with User" for different items → Should open same chat');
+        }
+
+        function openBorrowRequests() {
+            window.open('/borrow-requests', '_blank');
+        }
+
+        function showSystemStatus() {
+            const borrowRequests = JSON.parse(localStorage.getItem('borrowRequests') || '[]');
+            const chatUsers = JSON.parse(localStorage.getItem('chatUsers') || '[]');
+            
+            let html = '<div style="background: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">';
+            
+            html += '<h4 style="color: #25D366;">📊 System Status</h4>';
+            
+            html += `<div style="margin: 15px 0;"><strong>📝 Borrow Requests:</strong> ${borrowRequests.length}</div>`;
+            borrowRequests.forEach((req, index) => {
+                html += `<div style="margin: 8px 0; padding: 10px; background: #f9f9f9; border-radius: 5px; font-size: 0.9rem;">
+                    ${index + 1}. ${req.itemTitle} - ${req.itemOwnerName} → ${req.borrowerName} (${req.status})
+                </div>`;
+            });
+
+            html += `<div style="margin: 15px 0;"><strong>👥 Chat Users:</strong> ${chatUsers.length}</div>`;
+            chatUsers.forEach((user, index) => {
+                html += `<div style="margin: 8px 0; padding: 10px; background: #f9f9f9; border-radius: 5px; font-size: 0.9rem;">
+                    ${index + 1}. ${user.name} (${user.role}) - Items: ${user.items ? user.items.join(', ') : user.itemName}
+                </div>`;
+            });
+
+            // Count messages
+            let totalMessages = 0;
+            html += '<div style="margin: 15px 0;"><strong>💬 Chat Messages:</strong></div>';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('chat_')) {
+                    const messages = JSON.parse(localStorage.getItem(key) || '[]');
+                    totalMessages += messages.length;
+                    html += `<div style="margin: 5px 0; padding: 8px; background: #f9f9f9; border-radius: 5px; font-size: 0.9rem;">
+                        ${key.replace('chat_demo-user_', '').replace('owner_', '')}: ${messages.length} messages
+                    </div>`;
+                }
+            }
+
+            html += `<div style="margin: 15px 0; font-size: 1.1rem;"><strong>📈 Total Messages: ${totalMessages}</strong></div>`;
+            html += '</div>';
+
+            document.getElementById('systemStatus').innerHTML = html;
+        }
+
+        function clearAllTestData() {
+            if (confirm('🗑️ Are you sure you want to clear all test data?')) {
+                const keys = ['borrowRequests', 'chatUsers', 'notifications', 'browseItems'];
+                keys.forEach(key => localStorage.removeItem(key));
+                
+                // Clear chat messages
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('chat_')) {
+                        localStorage.removeItem(key);
+                    }
+                }
+                
+                document.getElementById('systemStatus').innerHTML = 
+                    '<div class="success">✅ All test data cleared successfully!</div>';
+            }
+        }
+
+        function exportTestData() {
+            const data = {
+                borrowRequests: JSON.parse(localStorage.getItem('borrowRequests') || '[]'),
+                chatUsers: JSON.parse(localStorage.getItem('chatUsers') || '[]'),
+                messages: {}
+            };
+
+            // Export chat messages
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('chat_')) {
+                    data.messages[key] = JSON.parse(localStorage.getItem(key) || '[]');
+                }
+            }
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ngjugaad-chat-test-data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Auto-run setup on page load
+        window.onload = function() {
+            setupCompleteTestData();
+            showSystemStatus();
+        };
+    </script>
+</body>
+</html>

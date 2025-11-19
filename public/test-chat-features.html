@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Chat Features</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #20BF5F;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 4px solid #25D366;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Chat Features Test Suite</h1>
+        <p>This page will help you test all the new chat features!</p>
+
+        <div class="section">
+            <h3>📋 Test Setup</h3>
+            <div class="step">
+                <strong>Step 1:</strong> Create chat users with multiple approved requests
+                <button onclick="createTestChatData()">Setup Test Data</button>
+                <div id="setupStatus"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>💬 Chat Persistence Test</h3>
+            <div class="step">
+                <strong>Step 2:</strong> Add test messages to localStorage
+                <button onclick="addTestMessages()">Add Test Messages</button>
+                <div id="messageStatus"></div>
+            </div>
+            <div class="step">
+                <strong>Step 3:</strong> Go to chat page and verify:
+                <ul>
+                    <li>✅ Users are visible after refresh</li>
+                    <li>✅ Chat history is preserved</li>
+                    <li>✅ Same user for multiple items shows in one chat</li>
+                </ul>
+                <button onclick="openChatPage()">Open Chat Page</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🖱️ Right-Click Features Test</h3>
+            <div class="info">
+                <strong>Test Instructions:</strong><br>
+                1. Go to chat page<br>
+                2. Right-click on any message<br>
+                3. Test these options:<br>
+                • 📋 Copy (should copy text to clipboard)<br>
+                • ✏️ Edit (only for your messages)<br>
+                • 🗑️ Delete for Me (removes from your view)<br>
+                • 🗑️ Delete for Everyone (only for your messages)
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🔄 Same User Multiple Requests Test</h3>
+            <div class="step">
+                <strong>Step 4:</strong> Create multiple requests from same user
+                <button onclick="createMultipleRequests()">Create Multiple Requests</button>
+                <div id="multipleStatus"></div>
+            </div>
+            <div class="step">
+                <strong>Step 5:</strong> Test chat consolidation
+                <button onclick="openBorrowRequests()">Open Borrow Requests</button>
+                <div class="info">
+                    Verify that clicking "Chat with User" for different items from same user 
+                    leads to the same chat conversation.
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📊 Current Data Status</h3>
+            <button onclick="showCurrentData()">Show Current Data</button>
+            <button onclick="clearAllData()">Clear All Test Data</button>
+            <div id="dataStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        function createTestChatData() {
+            // Create approved borrow requests for testing
+            const borrowRequests = [
+                {
+                    id: 'req_001',
+                    borrowRequestId: 'req_001',
+                    itemId: 'item_001',
+                    itemTitle: 'Gaming Laptop',
+                    itemImage: 'https://via.placeholder.com/150',
+                    itemCategory: 'Electronics',
+                    itemOwnerId: 'owner_001',
+                    itemOwnerName: 'Rajesh Kumar',
+                    itemOwnerEmail: 'rajesh@example.com',
+                    itemOwnerPhone: '9876543210',
+                    borrowerId: 'demo-user',
+                    borrowerName: 'Demo User',
+                    borrowerEmail: 'demo@example.com',
+                    borrowerPhone: '8765432109',
+                    status: 'approved',
+                    requestDate: new Date().toISOString(),
+                    approvedAt: new Date().toISOString()
+                },
+                {
+                    id: 'req_002',
+                    borrowRequestId: 'req_002',
+                    itemId: 'item_002',
+                    itemTitle: 'DSLR Camera',
+                    itemImage: 'https://via.placeholder.com/150',
+                    itemCategory: 'Electronics',
+                    itemOwnerId: 'owner_001', // Same owner as above
+                    itemOwnerName: 'Rajesh Kumar',
+                    itemOwnerEmail: 'rajesh@example.com',
+                    itemOwnerPhone: '9876543210',
+                    borrowerId: 'demo-user',
+                    borrowerName: 'Demo User',
+                    borrowerEmail: 'demo@example.com',
+                    borrowerPhone: '8765432109',
+                    status: 'approved',
+                    requestDate: new Date().toISOString(),
+                    approvedAt: new Date().toISOString()
+                },
+                {
+                    id: 'req_003',
+                    borrowRequestId: 'req_003',
+                    itemId: 'item_003',
+                    itemTitle: 'Power Drill',
+                    itemImage: 'https://via.placeholder.com/150',
+                    itemCategory: 'Tools',
+                    itemOwnerId: 'owner_002',
+                    itemOwnerName: 'Priya Sharma',
+                    itemOwnerEmail: 'priya@example.com',
+                    itemOwnerPhone: '7654321098',
+                    borrowerId: 'demo-user',
+                    borrowerName: 'Demo User',
+                    borrowerEmail: 'demo@example.com',
+                    borrowerPhone: '8765432109',
+                    status: 'approved',
+                    requestDate: new Date().toISOString(),
+                    approvedAt: new Date().toISOString()
+                }
+            ];
+
+            localStorage.setItem('borrowRequests', JSON.stringify(borrowRequests));
+            
+            document.getElementById('setupStatus').innerHTML = 
+                '<div class="success">✅ Test data created! 3 approved requests with 2 different owners</div>';
+        }
+
+        function addTestMessages() {
+            // Add test messages for different chat rooms
+            const chatRooms = [
+                {
+                    chatId: 'chat_demo-user_owner_001',
+                    messages: [
+                        {
+                            id: 'msg_001',
+                            text: 'Hi! Thanks for approving my request for the Gaming Laptop',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_001',
+                            receiverName: 'Rajesh Kumar',
+                            timestamp: new Date(Date.now() - 3600000).toISOString(),
+                            createdAt: new Date(Date.now() - 3600000)
+                        },
+                        {
+                            id: 'msg_002',
+                            text: 'You\'re welcome! When would you like to pick it up?',
+                            senderId: 'owner_001',
+                            senderName: 'Rajesh Kumar',
+                            receiverId: 'demo-user',
+                            receiverName: 'Demo User',
+                            timestamp: new Date(Date.now() - 3000000).toISOString(),
+                            createdAt: new Date(Date.now() - 3000000)
+                        },
+                        {
+                            id: 'msg_003',
+                            text: 'Also about the DSLR Camera - both items are ready for pickup',
+                            senderId: 'owner_001',
+                            senderName: 'Rajesh Kumar',
+                            receiverId: 'demo-user',
+                            receiverName: 'Demo User',
+                            timestamp: new Date(Date.now() - 1800000).toISOString(),
+                            createdAt: new Date(Date.now() - 1800000)
+                        },
+                        {
+                            id: 'msg_004',
+                            text: 'Great! I can come this evening around 6 PM',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_001',
+                            receiverName: 'Rajesh Kumar',
+                            timestamp: new Date(Date.now() - 900000).toISOString(),
+                            createdAt: new Date(Date.now() - 900000)
+                        }
+                    ]
+                },
+                {
+                    chatId: 'chat_demo-user_owner_002',
+                    messages: [
+                        {
+                            id: 'msg_101',
+                            text: 'Hello! I see you approved my request for the Power Drill',
+                            senderId: 'demo-user',
+                            senderName: 'Demo User',
+                            receiverId: 'owner_002',
+                            receiverName: 'Priya Sharma',
+                            timestamp: new Date(Date.now() - 2400000).toISOString(),
+                            createdAt: new Date(Date.now() - 2400000)
+                        },
+                        {
+                            id: 'msg_102',
+                            text: 'Yes! The drill is in excellent condition. Are you familiar with power tools?',
+                            senderId: 'owner_002',
+                            senderName: 'Priya Sharma',
+                            receiverId: 'demo-user',
+                            receiverName: 'Demo User',
+                            timestamp: new Date(Date.now() - 1200000).toISOString(),
+                            createdAt: new Date(Date.now() - 1200000)
+                        }
+                    ]
+                }
+            ];
+
+            // Save messages to localStorage
+            chatRooms.forEach(room => {
+                localStorage.setItem(room.chatId, JSON.stringify(room.messages));
+            });
+
+            document.getElementById('messageStatus').innerHTML = 
+                '<div class="success">✅ Test messages added! Check chat page for conversation history</div>';
+        }
+
+        function createMultipleRequests() {
+            // Add more requests from same user to test consolidation
+            const existingRequests = JSON.parse(localStorage.getItem('borrowRequests') || '[]');
+            
+            const newRequests = [
+                {
+                    id: 'req_004',
+                    borrowRequestId: 'req_004',
+                    itemId: 'item_004',
+                    itemTitle: 'Bluetooth Speaker',
+                    itemImage: 'https://via.placeholder.com/150',
+                    itemCategory: 'Electronics',
+                    itemOwnerId: 'owner_001', // Same owner again
+                    itemOwnerName: 'Rajesh Kumar',
+                    itemOwnerEmail: 'rajesh@example.com',
+                    itemOwnerPhone: '9876543210',
+                    borrowerId: 'demo-user',
+                    borrowerName: 'Demo User',
+                    borrowerEmail: 'demo@example.com',
+                    borrowerPhone: '8765432109',
+                    status: 'approved',
+                    requestDate: new Date().toISOString(),
+                    approvedAt: new Date().toISOString()
+                }
+            ];
+
+            const allRequests = [...existingRequests, ...newRequests];
+            localStorage.setItem('borrowRequests', JSON.stringify(allRequests));
+
+            document.getElementById('multipleStatus').innerHTML = 
+                '<div class="success">✅ Additional request created! Now Rajesh Kumar has 3 approved items for same user</div>';
+        }
+
+        function openChatPage() {
+            window.open('/chat', '_blank');
+        }
+
+        function openBorrowRequests() {
+            window.open('/borrow-requests', '_blank');
+        }
+
+        function showCurrentData() {
+            const borrowRequests = JSON.parse(localStorage.getItem('borrowRequests') || '[]');
+            const chatUsers = JSON.parse(localStorage.getItem('chatUsers') || '[]');
+            
+            let html = '<h4>Borrow Requests (' + borrowRequests.length + '):</h4>';
+            borrowRequests.forEach(req => {
+                html += `<div style="margin: 5px 0; padding: 5px; background: #f0f0f0;">
+                    ${req.itemTitle} - ${req.itemOwnerName} → ${req.borrowerName} (${req.status})
+                </div>`;
+            });
+
+            html += '<h4>Chat Users (' + chatUsers.length + '):</h4>';
+            chatUsers.forEach(user => {
+                html += `<div style="margin: 5px 0; padding: 5px; background: #f0f0f0;">
+                    ${user.name} (${user.role}) - Items: ${user.items ? user.items.join(', ') : user.itemName}
+                </div>`;
+            });
+
+            // Show message counts
+            html += '<h4>Message Counts:</h4>';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('chat_')) {
+                    const messages = JSON.parse(localStorage.getItem(key) || '[]');
+                    html += `<div style="margin: 5px 0; padding: 5px; background: #f0f0f0;">
+                        ${key}: ${messages.length} messages
+                    </div>`;
+                }
+            }
+
+            document.getElementById('dataStatus').innerHTML = html;
+        }
+
+        function clearAllData() {
+            const keys = ['borrowRequests', 'chatUsers'];
+            keys.forEach(key => localStorage.removeItem(key));
+            
+            // Clear chat messages
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('chat_')) {
+                    localStorage.removeItem(key);
+                }
+            }
+            
+            document.getElementById('dataStatus').innerHTML = 
+                '<div class="success">✅ All test data cleared!</div>';
+        }
+
+        // Auto-show current data on load
+        window.onload = showCurrentData;
+    </script>
+</body>
+</html>

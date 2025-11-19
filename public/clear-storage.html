@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Storage</title>
+</head>
+<body>
+    <h1>Clearing LocalStorage...</h1>
+    <script>
+        // Clear all items and requests
+        localStorage.removeItem('browseItems');
+        localStorage.removeItem('borrowRequests');
+        localStorage.removeItem('notifications');
+        localStorage.clear();
+        
+        console.log('All localStorage data cleared!');
+        alert('All items, requests, and data have been cleared! You can now add fresh items.');
+        
+        // Redirect to browse page
+        window.location.href = '/browse';
+    </script>
+</body>
+</html>
