@@ -1,16 +1,12 @@
-export const getDisplayName = (user) => {
+// Helper utilities for chat UI
+export function getDisplayName(user) {
   if (!user) return 'Unknown User';
   return (
     user.name || user.displayName || user.otherUserName || user.withUserName || user.borrowerName || user.itemOwnerName || user.receiverName || user.senderName || user.email || user.otherUserEmail || 'Unknown User'
   );
-};
+}
 
-export const getSnippet = (text, max = 50) => {
-  if (!text) return '';
-  return text.length > max ? text.slice(0, max - 1) + '…' : text;
-};
-
-export const formatRelativeTime = (ts) => {
+export function formatRelativeTime(ts) {
   if (!ts) return '';
   const date = ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts);
   const diff = Date.now() - date.getTime();
@@ -23,4 +19,15 @@ export const formatRelativeTime = (ts) => {
   const days = Math.floor(hr / 24);
   if (days < 7) return `${days}d`;
   return date.toLocaleDateString();
-};
+}
+
+export function getSnippet(text, max = 50) {
+  if (!text) return '';
+  // If an object was passed (e.g. { id, text, timestamp }), prefer its text property
+  let t = text;
+  if (typeof text === 'object') {
+    t = text.text ?? text.message ?? '';
+  }
+  if (!t) return '';
+  return t.length > max ? t.slice(0, max - 1) + '…' : t;
+}

@@ -7,7 +7,7 @@ import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, delete
 import ItemCard from "./ItemCard"; 
 import BorrowRequestModal from "./BorrowRequestModal"; // Assuming this file exists
 
-const BrowseItems = () => {
+const BrowseItems = ({ maxItems }) => {
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null); 
   const navigate = useNavigate();
@@ -378,13 +378,15 @@ const BrowseItems = () => {
     }, 300);
   }, [location, items, navigate]);
 
-  if (items.length === 0) {
+  if (!items || items.length === 0) {
     return <div className="p-6 text-center text-gray-500">No items posted yet.</div>;
   }
 
+  const displayedItems = typeof maxItems === 'number' ? items.slice(0, maxItems) : items;
+
   return (
     <div className="p-6 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {items.map((it) => (
+      {displayedItems.map((it) => (
         <ItemCard 
             key={it.id} 
             item={it} 

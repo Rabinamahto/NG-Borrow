@@ -1,188 +1,120 @@
-import React, { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
-import { Edit2, X, Check } from "lucide-react";
 
-const EditProfileModal = ({ user = {}, setUser, closeModal, onSave }) => {
-  const initialName = user.displayName ?? user.name ?? "";
-  const initialImage = user.photoURL ?? user.profileImage ?? "";
+import React, { useState } from "react";
+import { auth } from "../firebase";
+import { updateProfile } from "firebase/auth";
 
-  const [formData, setFormData] = useState({
-    name: initialName,
-    profileImage: initialImage,
-  });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [imgVisible, setImgVisible] = useState(!!initialImage);
+const EditProfileModal = ({ user, setUser, closeModal }) => {
+  const [name, setName] = useState(user.name);
+  const [image, setImage] = useState(user.profileImage);
 
-  // detect touch devices
-  const isTouch = typeof window !== "undefined" && (("ontouchstart" in window) || navigator.maxTouchPoints > 0);
-  // ignore quick taps right after mount (helps some touch devices)
-  const ignoreInitialClick = useRef(true);
-  useEffect(() => {
-    const t = setTimeout(() => {
-      ignoreInitialClick.current = false;
-    }, 300);
-    return () => clearTimeout(t);
-  }, []);
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
 
-  // lock body scroll
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev || "";
+    reader.onload = () => {
+      setImage(reader.result);
     };
-  }, []);
 
-  useEffect(() => {
-    setFormData({ name: initialName, profileImage: initialImage });
-    setImgVisible(!!initialImage);
-  }, [initialName, initialImage]);
+    if (file) reader.readAsDataURL(file);
+  };
 
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === "Escape") closeModal();
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleSave();
+  const saveChanges = () => {
+    const updatedUser = { ...user, name, profileImage: image };
+
+    (async () => {
+      try {
+        if (auth && auth.currentUser) {
+          await updateProfile(auth.currentUser, {
+            displayName: name || undefined,
+            photoURL: image || undefined,
+          });
+        }
+      } catch (err) {
+        console.warn("Failed to update Firebase profile:", err);
       }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData]);
 
-  const handleSave = async () => {
-    setError("");
-    const name = (formData.name || "").trim();
-    if (!name) {
-      setError("Name cannot be empty.");
-      return;
-    }
+      const finalUser = {
+        ...updatedUser,
+        displayName: name,
+        photoURL: image,
+        initials: (name || "")
+          .split(" ")
+          .filter(Boolean)
+          .map((n) => n[0]?.toUpperCase())
+          .join("") || user.initials,
+      };
 
-    const updatedUser = {
-      ...user,
-      name,
-      displayName: name,
-      profileImage: formData.profileImage || "",
-      photoURL: formData.profileImage || "",
-      initials: name
-        .split(" ")
-        .filter(Boolean)
-        .map((n) => n[0].toUpperCase())
-        .join(""),
-    };
+      setUser(finalUser);
 
-    setSaving(true);
-    try {
-      if (typeof onSave === "function") {
-        const result = await onSave(updatedUser);
-        const finalUser = result && typeof result === "object" ? result : updatedUser;
-        setUser?.(finalUser);
-      } else {
-        setUser?.(updatedUser);
-        try { localStorage.setItem("userProfile", JSON.stringify(updatedUser)); } catch {}
-      }
-      setSaving(false);
+      try {
+        localStorage.setItem("userProfile", JSON.stringify(finalUser));
+      } catch (e) {}
+
       closeModal();
-    } catch (err) {
-      console.error("EditProfile save error:", err);
-      setError(err?.message || "Save failed. Try again.");
-      setSaving(false);
-    }
+    })();
   };
 
-  // backdrop close: disable for touch devices to avoid accidental back/navigation
-  const handleBackdropClick = (e) => {
-    if (ignoreInitialClick.current) return;
-    if (isTouch) return; // DO NOT close on backdrop for touch devices
-    if (e.target !== e.currentTarget) return;
-    closeModal();
-  };
+  return (
+    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-[90]">
+      
+      <div className="bg-white p-6 w-[380px] rounded-xl shadow-xl relative">
 
-  const modal = (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-60 z-[9999] flex items-center justify-center"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm mx-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-            <Edit2 className="w-5 h-5 mr-2 text-indigo-600" />
-            Edit Profile
-          </h2>
-          <button
-            onClick={closeModal}
-            className="text-gray-500 hover:text-gray-700 p-1 rounded-full"
-            type="button"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        <button
+          onClick={closeModal}
+          className="absolute right-4 top-3 text-gray-600 hover:text-red-500"
+        >
+          ✖
+        </button>
 
-        {error && <div className="text-sm text-red-600 mb-3">{error}</div>}
+        <h2 className="text-xl font-bold mb-4 text-center">Edit Profile</h2>
 
-        <div className="space-y-4">
-          <label className="block">
-            <div className="text-sm font-medium text-gray-700 mb-1">Name</div>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              autoFocus
-            />
-          </label>
+        {/* Upload Image */}
+        <div className="flex justify-center mb-4 relative">
+          <label className="cursor-pointer relative group">
 
-          <label className="block">
-            <div className="text-sm font-medium text-gray-700 mb-1">Profile Image URL</div>
-            <input
-              type="url"
-              value={formData.profileImage}
-              onChange={(e) => setFormData((p) => ({ ...p, profileImage: e.target.value }))}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              placeholder="https://..."
-              onBlur={() => setImgVisible(!!formData.profileImage)}
-            />
-            {formData.profileImage && imgVisible && (
-              <div className="mt-2 text-center">
+            {/* Profile Image */}
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 border relative">
+              {image ? (
                 <img
-                  src={formData.profileImage}
+                  src={image}
                   alt="Preview"
-                  className="w-16 h-16 rounded-full object-cover mx-auto ring-2 ring-indigo-200"
-                  onError={(e) => { setImgVisible(false); e.target.style.display = "none"; }}
+                  className="w-full h-full object-cover"
                 />
-              </div>
-            )}
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xl font-semibold">
+                  {user.initials}
+                </div>
+              )}
+            </div>
+
+            {/* ✏ Edit Icon */}
+            <div className="absolute bottom-0 right-0 bg-black/60 text-white p-2 rounded-full shadow-md group-hover:bg-black transition">
+              ✏️
+            </div>
+
+            {/* Hidden File Input */}
+            <input type="file" className="hidden" onChange={handleImageUpload} />
           </label>
         </div>
 
-        <div className="flex justify-end gap-3 mt-5">
-          <button type="button" onClick={closeModal} className="px-4 py-2 border rounded" disabled={saving}>
-            Cancel
-          </button>
+        {/* Name Input */}
+        <label className="block mb-1 font-medium">Name</label>
+        <input
+          type="text"
+          className="w-full border p-2 rounded-lg mb-4"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
-          <button
-            type="button"
-            onClick={handleSave}
-            className="px-4 py-2 bg-indigo-600 text-white rounded disabled:opacity-60 flex items-center"
-            disabled={saving || !formData.name.trim()}
-          >
-            <Check className="w-4 h-4 mr-2" />
-            {saving ? "Saving..." : "Save"}
-          </button>
-        </div>
+        <button
+          onClick={saveChanges}
+          className="w-full bg-[#3a75c4] text-white py-2 rounded-lg hover:bg-[#2f63a8]"
+        >
+          Save Changes
+        </button>
       </div>
     </div>
   );
-
-  return createPortal(modal, document.body);
 };
 
 export default EditProfileModal;

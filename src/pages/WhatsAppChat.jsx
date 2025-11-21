@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
-import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, setDoc, doc, updateDoc, increment } from 'firebase/firestore';
 import { FiSend, FiUser, FiMoreVertical } from 'react-icons/fi';
 import { BsEmojiSmile } from 'react-icons/bs';
 import { getSnippet, formatRelativeTime } from '../utils/chatHelpers';
@@ -12,7 +12,40 @@ const WhatsAppChat = () => {
   const [messages, setMessages] = useState([]);
   const [chatUsers, setChatUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const [currentChatId, setCurrentChatId] = useState(null);
+  // helper: parse different timestamp shapes to ms since epoch
+  const parseTimeToMs = (t) => {
+    if (!t) return 0;
+    try {
+      if (typeof t === 'number') return t;
+      if (typeof t === 'string') {
+        const p = Date.parse(t);
+        return isNaN(p) ? 0 : p;
+      }
+      if (t.seconds) return t.seconds * 1000;
+      if (t instanceof Date) return t.getTime();
+      return Number(t) || 0;
+    } catch (e) {
+      return 0;
+    }
+  };
+
+  const sortByLastMessage = (list) => {
+    const arr = Array.isArray(list) ? list.slice() : [];
+    arr.sort((a, b) => {
+      const aTime = parseTimeToMs(a.lastMessageTime || a.lastMessageAt || (a.lastMessage && a.lastMessage.timestamp) || 0);
+      const bTime = parseTimeToMs(b.lastMessageTime || b.lastMessageAt || (b.lastMessage && b.lastMessage.timestamp) || 0);
+      return bTime - aTime;
+    });
+    return arr;
+  };
+  const notificationsRef = useRef(new Set());
+  const [toasts, setToasts] = useState([]);
+  const [sending, setSending] = useState(false);
+  // debugInfo removed for production: on-screen debug panel was removed
   
   const getDisplayName = (user) => {
     if (!user) return 'Unknown User';
@@ -117,6 +150,55 @@ const WhatsAppChat = () => {
     }
   }, [selectedUser]);
 
+  // Request browser notification permission once
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
+  // Listen to current user's chat meta so left list stays synced and we can show notifications
+  useEffect(() => {
+    if (!currentUser) return;
+    try {
+      const uid = currentUser.uid;
+      const userChatsCol = collection(db, 'users', uid, 'chats');
+      const q = query(userChatsCol, orderBy('lastUpdated', 'desc'));
+      const unsub = onSnapshot(q, (snapshot) => {
+        const updated = [];
+        snapshot.forEach(snap => updated.push({ id: snap.id, ...snap.data() }));
+
+        setChatUsers(prev => {
+          const map = new Map();
+          updated.forEach(c => map.set(c.id, c));
+          (prev || []).forEach(p => { if (!map.has(p.id)) map.set(p.id, p); });
+          return Array.from(map.values());
+        });
+
+        // notify for new lastMessage entries
+        snapshot.docChanges().forEach(change => {
+          const data = change.doc.data() || {};
+          const last = data.lastMessage;
+          if (!last || !last.id) return;
+          if (notificationsRef.current.has(last.id)) return;
+          if (last.senderId === uid) return; // don't notify own messages
+          notificationsRef.current.add(last.id);
+
+          const title = (data.otherUser && (data.otherUser.name || data.otherUser.displayName)) || data.otherName || 'New message';
+          const body = (last.text || '').slice(0, 120);
+
+          if ("Notification" in window && Notification.permission === 'granted') {
+            try { new Notification(title, { body }); } catch (e) { /* ignore */ }
+          }
+          setToasts(prev => [...prev.slice(-3), { id: last.id, title, body }]);
+        });
+      });
+      return () => unsub();
+    } catch (e) {
+      console.error('chat meta listener error', e);
+    }
+  }, [currentUser]);
+
     // Handle URL parameters for direct user selection
   useEffect(() => {
     const userId = searchParams.get('user');
@@ -160,9 +242,11 @@ const WhatsAppChat = () => {
 
   // Listen to messages for selected user
   useEffect(() => {
-    if (!selectedUser || !currentUser) return;
+    // Subscribe to messages using the stable currentChatId. This avoids races
+    // where selectedUser changes but a watcher for the old chat is still active.
+    if (!currentChatId || !currentUser) return;
 
-    const chatId = [currentUser.uid, selectedUser.id].sort().join('_');
+    const chatId = currentChatId;
     const messagesQuery = query(
       collection(db, 'chats', chatId, 'messages'),
       orderBy('createdAt', 'asc')
@@ -174,6 +258,30 @@ const WhatsAppChat = () => {
         messageList.push({ id: doc.id, ...doc.data() });
       });
       setMessages(messageList);
+      // Update chatUsers entry for this selectedUser so the left list shows the latest
+      try {
+        const last = messageList[messageList.length - 1];
+        if (last && selectedUser) {
+          const lastText = last.text || last.message || '';
+          let lastTime = last.timestamp || last.createdAt || new Date().toISOString();
+          // Normalize Firestore Timestamp if present
+          if (lastTime && lastTime.seconds) {
+            lastTime = new Date(lastTime.seconds * 1000).toISOString();
+          }
+          setChatUsers(prev => {
+            const list = Array.isArray(prev) ? prev.slice() : [];
+            // remove any existing entry for this user
+            const others = list.filter(u => u.id !== selectedUser.id);
+            const me = list.find(u => u.id === selectedUser.id) || selectedUser;
+            const updated = { ...me, id: selectedUser.id, lastMessage: lastText, lastMessageTime: lastTime };
+            let next = [updated, ...others];
+            next = sortByLastMessage(next);
+            try { localStorage.setItem('chatUsers', JSON.stringify(next)); } catch (e) {}
+            return next;
+          });
+        }
+      } catch (e) { /* ignore */ }
+
       scrollToBottom();
     }, (error) => {
       console.log('Loading messages from localStorage fallback');
@@ -181,7 +289,7 @@ const WhatsAppChat = () => {
     });
 
     return () => unsubscribe();
-  }, [selectedUser, currentUser]);
+  }, [currentChatId, currentUser]);
 
   const loadChatUsers = () => {
     try {
@@ -394,13 +502,50 @@ const WhatsAppChat = () => {
   };
 
   const scrollToBottom = () => {
+    // Robust scroll: prefer setting container.scrollTop directly to avoid
+    // layout-jump behavior from flex reflows. Also fallback to scrollIntoView.
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
+      try {
+        const container = messagesContainerRef.current;
+        if (container) {
+          // jump to bottom immediately to avoid upward flicker
+          container.scrollTop = container.scrollHeight;
+          return;
+        }
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: 'end' });
+      } catch (e) {
+        try { messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: 'end' }); } catch (_) {}
+      }
+    }, 80);
   };
+
+  // Ensure we scroll to bottom whenever messages change (new message) or when a
+  // user is selected. The small timeout lets layout stabilize (images, fonts).
+  useEffect(() => {
+    if (!messages) return;
+    if (messages.length === 0) {
+      // keep empty state centered, but still ensure input is visible
+      scrollToBottom();
+      return;
+    }
+    scrollToBottom();
+  }, [messages.length]);
+
+  // Also try after selecting a user to avoid initial jump caused by sidebar changes
+  useEffect(() => {
+    if (!selectedUser) return;
+    // allow layout to settle
+    const t = setTimeout(() => scrollToBottom(), 120);
+    return () => clearTimeout(t);
+  }, [selectedUser]);
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedUser || !currentUser) return;
+    if (sending) {
+      console.log('sendMessage called but already sending');
+      return;
+    }
+    setSending(true);
 
     const messageData = {
       text: newMessage.trim(),
@@ -416,14 +561,51 @@ const WhatsAppChat = () => {
     };
 
     try {
+    console.log('sendMessage -> start', { to: selectedUser && selectedUser.id, text: newMessage.trim() });
       // Try to save to Firestore
-      const chatId = [currentUser.uid, selectedUser.id].sort().join('_');
-      await addDoc(collection(db, 'chats', chatId, 'messages'), {
+      const chatId = currentChatId || [currentUser.uid, selectedUser.id].sort().join('_');
+      const docRef = await addDoc(collection(db, 'chats', chatId, 'messages'), {
         ...messageData,
         createdAt: serverTimestamp()
       });
+    console.log('sendMessage -> addDoc succeeded', docRef.id);
+
+      // update chat meta for both participants so left-list stays current and notifications work
+      try {
+        const lastMsgMeta = { id: docRef.id, text: messageData.text, senderId: messageData.senderId, timestamp: serverTimestamp() };
+        const meta = {
+          lastMessage: lastMsgMeta,
+          lastUpdated: serverTimestamp(),
+          otherUser: { uid: selectedUser.id, name: selectedUser.name || selectedUser.itemOwnerName || selectedUser.borrowerName }
+        };
+
+        await setDoc(doc(db, 'users', currentUser.uid, 'chats', chatId), meta, { merge: true });
+        await setDoc(doc(db, 'users', selectedUser.id, 'chats', chatId), meta, { merge: true });
+        // increment recipient unread count
+        try {
+          await updateDoc(doc(db, 'users', selectedUser.id, 'chats', chatId), { unreadCount: increment(1) });
+        } catch (e) {
+          // ignore if update fails
+        }
+        // Also update local chatUsers state so UI reorders immediately
+        try {
+          const now = new Date().toISOString();
+          setChatUsers(prev => {
+            const list = Array.isArray(prev) ? prev.slice() : [];
+            const others = list.filter(u => u.id !== selectedUser.id);
+            const me = list.find(u => u.id === selectedUser.id) || selectedUser;
+            const updated = { ...me, id: selectedUser.id, lastMessage: messageData.text, lastMessageTime: now };
+            let next = [updated, ...others];
+            next = sortByLastMessage(next);
+            try { localStorage.setItem('chatUsers', JSON.stringify(next)); } catch (e) {}
+            return next;
+          });
+        } catch (e) { /* ignore */ }
+      } catch (metaErr) {
+        console.warn('Failed to update chat meta for users', metaErr);
+      }
     } catch (error) {
-      console.log('Firestore not available, saving to localStorage');
+      console.log('Firestore not available, saving to localStorage', error);
       
       // Fallback to localStorage
       const chatId = [currentUser.uid, selectedUser.id].sort().join('_');
@@ -448,8 +630,13 @@ const WhatsAppChat = () => {
         }
         return user;
       });
-      setChatUsers(updatedChatUsers);
-      localStorage.setItem('chatUsers', JSON.stringify(updatedChatUsers));
+  // Move updated user to top and sort by last message time
+  const others = updatedChatUsers.filter(u => u.id !== selectedUser.id);
+  const updatedUser = updatedChatUsers.find(u => u.id === selectedUser.id) || { id: selectedUser.id, name: selectedUser.name, lastMessage: messageData.text, lastMessageTime: messageData.timestamp };
+  let reordered = [updatedUser, ...others];
+  reordered = sortByLastMessage(reordered);
+  setChatUsers(reordered);
+  localStorage.setItem('chatUsers', JSON.stringify(reordered));
       
       // Send notification to other user (store in their notifications)
       try {
@@ -475,6 +662,7 @@ const WhatsAppChat = () => {
     }
 
     setNewMessage('');
+    setSending(false);
   };
 
   const handleKeyPress = (e) => {
@@ -603,10 +791,72 @@ const WhatsAppChat = () => {
 
   // Handle user selection for mobile
   const handleUserSelect = (user) => {
+    console.log('handleUserSelect -> selecting user', user && (user.id || user.email || user.name));
+  // debug info removed
     setSelectedUser(user);
+    // immediately clear messages to avoid showing messages from the previous chat
+    setMessages([]);
+    try {
+      const uid = currentUser?.uid;
+      if (uid && user?.id) {
+        const chatId = [uid, user.id].sort().join('_');
+        setCurrentChatId(chatId);
+      } else {
+        setCurrentChatId(null);
+      }
+    } catch (e) { setCurrentChatId(null); }
     if (isMobile) {
       setShowChatList(false); // Hide chat list on mobile when user selected
     }
+
+    // Persist a minimal chat entry so the conversation stays in the left list
+    // even if no message is sent yet. We try Firestore first and fall back to localStorage.
+    try {
+      const currentUid = currentUser?.uid;
+      if (currentUid && user?.id) {
+        const chatId = [currentUid, user.id].sort().join('_');
+
+        // Update user's chat doc to ensure it exists (keeps left-list persistent)
+        // Create a minimal presence doc for the current user only.
+        // IMPORTANT: do NOT set `lastUpdated` or `lastMessage` here —
+        // those fields control ordering and should only change when a message is sent.
+        const presence = {
+          otherUser: { uid: user.id, name: user.name || user.itemOwnerName || user.borrowerName },
+          createdAt: serverTimestamp()
+        };
+
+        // Firestore write (best-effort) for current user's chat record only.
+        try {
+          setDoc(doc(db, 'users', currentUid, 'chats', chatId), presence, { merge: true }).catch(() => {});
+          // mark messages as read for this chat for current user (best-effort)
+          updateDoc(doc(db, 'users', currentUid, 'chats', chatId), { unreadCount: 0 }).catch(() => {});
+        } catch (e) {
+          // ignore firestore runtime problems
+        }
+
+        // Also ensure localStorage has this user in chatUsers for offline persistence
+        try {
+          const stored = JSON.parse(localStorage.getItem('chatUsers') || '[]');
+          if (!stored.find(u => u.id === user.id)) {
+            let toSave = [{ id: user.id, name: user.name || user.itemOwnerName || user.borrowerName, itemName: user.itemName || user.items?.[0] || '' }, ...stored];
+            toSave = sortByLastMessage(toSave);
+            localStorage.setItem('chatUsers', JSON.stringify(toSave));
+            setChatUsers(prev => {
+              if (!prev) return toSave;
+              if (prev.find(u => u.id === user.id)) return prev;
+              const next = [ { id: user.id, name: user.name || user.itemOwnerName || user.borrowerName, itemName: user.itemName || user.items?.[0] || '' }, ...prev ];
+              return sortByLastMessage(next);
+            });
+          } else {
+            // ensure unread cleared locally
+            const updated = stored.map(u => u.id === user.id ? { ...u, unreadCount: 0 } : u);
+            localStorage.setItem('chatUsers', JSON.stringify(updated));
+          }
+        } catch (lsErr) {
+          // ignore localStorage errors
+        }
+      }
+    } catch (err) { console.error('handleUserSelect error', err); }
   };
 
   // Go back to chat list on mobile
@@ -772,6 +1022,17 @@ const WhatsAppChat = () => {
 
   return (
     <div className="h-screen flex bg-gray-100">
+      {/* In-app toasts for incoming messages */}
+      {toasts.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
+          {toasts.map(ts => (
+            <div key={ts.id} className="bg-white shadow-md rounded-lg px-4 py-2 border">
+              <strong className="block text-sm">{ts.title}</strong>
+              <span className="text-xs text-gray-600">{ts.body}</span>
+            </div>
+          ))}
+        </div>
+      )}
       {/* Left Sidebar - Chat List */}
       <div className={`${(isMobile && !showChatList) ? 'hidden' : 'block'} w-full md:w-1/3 bg-white border-r border-gray-300 flex flex-col`}>
         {/* Header */}
@@ -790,12 +1051,30 @@ const WhatsAppChat = () => {
 
         {/* Search */}
         <div className="p-3 bg-gray-50 border-b">
-          <div className="bg-white rounded-lg px-3 py-2 text-sm text-gray-500">
-            Search or start new chat
+          <div className="bg-white rounded-lg px-3 py-2 text-sm flex items-center">
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const q = searchTerm.trim().toLowerCase();
+                  if (!q) return;
+                  const found = chatUsers.find(u => (u.name || '').toLowerCase().includes(q) || (u.itemName || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q));
+                  if (found) {
+                    handleUserSelect(found);
+                  }
+                }
+              }}
+              placeholder="Search or start new chat"
+              className="w-full px-2 py-2 text-sm focus:outline-none"
+            />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm('')} className="text-xs text-gray-500 ml-2">Clear</button>
+            )}
           </div>
         </div>
 
-        {/* Debug Info - Remove this later */}
+        {/* Compact status bar */}
         <div className="p-3 bg-yellow-50 border-b text-xs">
           <div className="flex justify-between items-center">
             <div>
@@ -865,7 +1144,18 @@ const WhatsAppChat = () => {
               </div>
             </div>
           ) : (
-            chatUsers.map((user) => (
+            // apply simple client-side filter when a search term is present
+            (() => {
+              const q = (searchTerm || '').trim().toLowerCase();
+              const listToShow = q
+                ? chatUsers.filter(u => {
+                    const name = (u.name || '').toLowerCase();
+                    const item = (u.itemName || u.items?.[0] || '').toLowerCase();
+                    const email = (u.email || '').toLowerCase();
+                    return name.includes(q) || item.includes(q) || email.includes(q);
+                  })
+                : chatUsers;
+              return listToShow.map((user) => (
               <div
                 key={user.id}
                 onClick={() => handleUserSelect(user)}
@@ -940,12 +1230,13 @@ const WhatsAppChat = () => {
                 </div>
               </div>
             ))
+            })()
           )}
         </div>
       </div>
 
-      {/* Right Side - Chat Window */}
-      <div className={`${(isMobile && showChatList) ? 'hidden' : 'block'} flex-1 flex flex-col`}>
+  {/* Right Side - Chat Window */}
+  <div className={`${(isMobile && showChatList) ? 'hidden' : 'block'} flex-1 flex flex-col`} style={{ minHeight: 0 }}>
         {selectedUser ? (
           <>
             {/* Chat Header */}
@@ -991,8 +1282,9 @@ const WhatsAppChat = () => {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50" style={{
-              backgroundImage: "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"grain\" width=\"100\" height=\"100\" patternUnits=\"userSpaceOnUse\"><circle cx=\"25\" cy=\"25\" r=\"1\" fill=\"%23f0f0f0\" opacity=\"0.3\"/><circle cx=\"75\" cy=\"75\" r=\"1\" fill=\"%23f0f0f0\" opacity=\"0.3\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23grain)\"/></svg>')"
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50" style={{
+              backgroundImage: "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"grain\" width=\"100\" height=\"100\" patternUnits=\"userSpaceOnUse\"><circle cx=\"25\" cy=\"25\" r=\"1\" fill=\"%23f0f0f0\" opacity=\"0.3\"/><circle cx=\"75\" cy=\"75\" r=\"1\" fill=\"%23f0f0f0\" opacity=\"0.3\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23grain)\"/></svg>')",
+              minHeight: 0
             }}>
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500">
@@ -1090,7 +1382,7 @@ const WhatsAppChat = () => {
             </div>
 
             {/* Message Input */}
-            <div className="bg-white p-4 border-t">
+              <div className="bg-white p-4 border-t sticky bottom-0 z-10">
               <div className="flex items-center space-x-3">
                 <BsEmojiSmile className="w-6 h-6 text-gray-500 cursor-pointer hover:text-gray-700" />
                 <div className="flex-1 relative">

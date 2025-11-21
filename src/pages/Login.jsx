@@ -1,6 +1,6 @@
 // src/pages/Login.jsx
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth.jsx";
 
 const Login = () => {
@@ -9,6 +9,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const location = useLocation();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -23,7 +24,9 @@ const Login = () => {
       if (result.success) {
         console.log("✅ Login successful!");
         alert("Login successful!");
-        navigate("/"); // Hero page
+        // If we have a redirect target from location.state.from, go there.
+        const dest = location?.state?.from || "/";
+        navigate(dest);
       } else {
         console.error("❌ Login failed:", result.error);
         alert(`Login failed: ${result.error}`);
