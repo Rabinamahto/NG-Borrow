@@ -19,10 +19,9 @@ const ChatInterface = () => {
   const [chatUsers, setChatUsers] = useState([]);
 
   const getDisplayName = (user) => {
-    if (!user) return 'Unknown User';
-    return (
-      user.name || user.displayName || user.otherUserName || user.withUserName || user.borrowerName || user.itemOwnerName || user.email || user.otherUserEmail || 'Unknown User'
-    );
+    if (!user) return null;
+    const name = user.name || user.displayName || user.otherUserName || user.withUserName || user.borrowerName || user.itemOwnerName || user.email || user.otherUserEmail;
+    return name && name.trim() ? name.trim() : null;
   };
   
   useEffect(() => {
@@ -36,6 +35,8 @@ const ChatInterface = () => {
       const selId = selectedUser?.id || selectedUser?.uid || selectedUser?.userId || selectedUser?.otherUserId || selectedUser?.borrowerId || selectedUser?.itemOwnerId || (typeof selectedUser === 'string' ? selectedUser : null);
       if (!selId) return;
       const selName = getDisplayName(selectedUser);
+      if (!selName) return; // Don't add users without valid names
+      
       const normalized = { id: selId, name: selName, ...selectedUser };
 
       setChatUsers(prev => {
@@ -52,51 +53,104 @@ const ChatInterface = () => {
 
   const loadChatUsers = () => {
     try {
-      // Check both borrowRequests and Firestore-style data
-      const borrowRequestsJSON = localStorage.getItem('borrowRequests');
-      const borrowRequests = borrowRequestsJSON ? JSON.parse(borrowRequestsJSON) : [];
-
-      console.log('All borrow requests:', borrowRequests);
-
-      // Look for approved requests in our new data structure
-      const approvedRequests = borrowRequests.filter(request => 
-        request.status === 'approved'
-      );
-
-      console.log('Approved requests:', approvedRequests);
-
       const uniqueUsers = new Map();
       const currentUserId = auth.currentUser?.uid || 'demo-user';
 
       console.log('Current user ID:', currentUserId);
+      console.log('🧹 Starting with completely empty chat list - will only add users with messages');
+      
+      // Clear any cached chatUsers from localStorage to start fresh
+      try {
+        localStorage.removeItem('chatUsers');
+        // Also clear placeholder user chats
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('chat_')) {
+            try {
+              const msgs = JSON.parse(localStorage.getItem(key) || '[]');
+              const hasPlaceholders = msgs.some(msg => {
+                const senderName = (msg.senderName || '').toLowerCase();
+                const receiverName = (msg.receiverName || '').toLowerCase();
+                
+                const blockedNames = [
+                  'user', 'another user', 'demo user', 'test user', 
+                  'borrower', 'item owner', 'chat user', 'unknown user',
+                  'guest', 'anonymous', 'placeholder'
+                ];
+                
+                return blockedNames.includes(senderName) || 
+                       blockedNames.includes(receiverName) ||
+                       /^user\d*$/i.test(msg.senderName || '') ||
+                       /^user\d*$/i.test(msg.receiverName || '');
+              });
+              if (hasPlaceholders) {
+                keysToRemove.push(key);
+              }
+            } catch (e) {
+              keysToRemove.push(key);
+            }
+          }
+        }
+        keysToRemove.forEach(key => {
+          localStorage.removeItem(key);
+          console.log('🗑️ ChatInterface: Removed placeholder chat:', key);
+        });
+        console.log('🗑️ Cleared cached chatUsers from localStorage');
+      } catch (e) {
+        console.log('Could not clear chatUsers from localStorage');
+      }
 
-      approvedRequests.forEach(request => {
-        // For borrower: add item owner to chat list
-        if (request.borrowerId === currentUserId && request.itemOwnerId && !uniqueUsers.has(request.itemOwnerId)) {
-          uniqueUsers.set(request.itemOwnerId, {
-            id: request.itemOwnerId,
-            name: request.itemOwnerName || 'Item Owner',
-            email: request.itemOwnerEmail || '',
-            itemName: request.itemTitle || 'Unknown Item',
-            itemImage: request.itemImage || null,
-            borrowRequestId: request.borrowRequestId,
-            lastActivity: new Date().toISOString()
-          });
+      // ONLY load users from actual chat conversations - no other sources
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (!key || !key.startsWith('chat_')) continue;
+          const messagesJSON = localStorage.getItem(key);
+          if (!messagesJSON) continue;
+          const msgs = JSON.parse(messagesJSON);
+          if (!Array.isArray(msgs) || msgs.length === 0) continue;
+
+          // derive other user id from key (chat_<idA>_<idB>)
+          const idPart = key.replace('chat_', '');
+          const parts = idPart.split('_');
+          const otherId = parts.find(p => p !== currentUserId) || parts[0];
+          if (!otherId || otherId === currentUserId) continue;
+
+          const lastMsg = msgs[msgs.length - 1];
+          if (!lastMsg || !lastMsg.text || !lastMsg.text.trim()) continue;
+          
+          // Extract user name from actual messages, not borrow requests
+          const userMessage = msgs.find(msg => 
+            (msg.senderId === otherId && msg.senderName) || 
+            (msg.receiverId === otherId && msg.receiverName)
+          );
+          
+          const userName = userMessage ? 
+            (userMessage.senderId === otherId ? userMessage.senderName : userMessage.receiverName) :
+            'Chat User';
+
+          // Only add if we have a real name from messages
+          if (!userName || userName === otherId) continue;
+
+          const existing = {
+            id: otherId,
+            name: userName,
+            email: '',
+            itemName: userMessage ? userMessage.itemName || '' : '',
+            itemImage: null,
+            borrowRequestId: null,
+            lastActivity: null,
+            lastMessage: lastMsg.text.trim(),
+            lastMessageAt: lastMsg.timestamp || lastMsg.createdAt || new Date().toISOString()
+          };
+
+          console.log('✅ Added user with conversation history:', userName, 'Messages:', msgs.length);
+          uniqueUsers.set(otherId, existing);
         }
-        
-        // For owner: add borrower to chat list
-        if (request.itemOwnerId === currentUserId && request.borrowerId && !uniqueUsers.has(request.borrowerId)) {
-          uniqueUsers.set(request.borrowerId, {
-            id: request.borrowerId,
-            name: request.borrowerName || 'Borrower',
-            email: request.borrowerEmail || '',
-            itemName: request.itemTitle || 'Unknown Item',
-            itemImage: request.itemImage || null,
-            borrowRequestId: request.borrowRequestId,
-            lastActivity: new Date().toISOString()
-          });
-        }
-      });
+      } catch (err) {
+        console.warn('Error loading localStorage chats', err);
+      }
 
       // If Firebase is available, listen to user's chats in Firestore and merge
       if (auth.currentUser && db) {
@@ -107,42 +161,48 @@ const ChatInterface = () => {
           );
 
           const unsubscribe = onSnapshot(chatsQuery, (snapshot) => {
+            console.log('🔥 Firestore snapshot received, docs:', snapshot.size);
             snapshot.forEach(docSnap => {
               const data = docSnap.data();
               const otherUserId = data.otherUserId || data.withUserId || data.participantId;
-              if (!otherUserId) return;
+              if (!otherUserId || otherUserId === currentUserId) return;
 
-              const existing = uniqueUsers.get(otherUserId) || {
+              // STRICT: Only include users who have actual messages with real content
+              if (!data.lastMessage || !data.lastMessage.trim() || data.lastMessage.length < 1) {
+                console.log('❌ Skipping user without real messages:', otherUserId);
+                return;
+              }
+
+              // STRICT: Must have a real name, not just email or ID
+              const realName = data.otherUserName || data.withUserName;
+              if (!realName || realName.trim() === '' || realName === otherUserId) {
+                console.log('❌ Skipping user without real name:', otherUserId, realName);
+                return;
+              }
+
+              const existing = {
                 id: otherUserId,
-                name: data.otherUserName || data.withUserName || data.otherUserEmail || otherUserId,
+                name: realName.trim(),
                 email: data.otherUserEmail || data.withUserEmail || '',
                 itemName: data.itemTitle || data.itemName || '',
                 itemImage: data.itemImage || null,
                 borrowRequestId: data.borrowRequestId || null,
                 lastActivity: data.lastMessageAt || null,
-                lastMessage: data.lastMessage || '',
+                lastMessage: data.lastMessage.trim(),
                 lastMessageAt: data.lastMessageAt || null,
-                // prefer the explicit chatId stored in the document, fall back to the user-chats doc id
                 chatId: data.chatId || docSnap.id
               };
 
-              // If items present in this doc, add them
-              if (data.itemId || data.itemTitle) {
-                existing.items = existing.items || [];
-                existing.items.push({ id: data.itemId, title: data.itemTitle, image: data.itemImage, chatId: data.chatId || docSnap.id });
-              }
-
-              // prefer firestore timestamps for lastMessageAt
-              if (data.lastMessageAt) {
-                existing.lastMessage = data.lastMessage || existing.lastMessage;
-                existing.lastMessageAt = data.lastMessageAt;
-              }
-
+              console.log('✅ Added Firestore user with messages:', realName);
               uniqueUsers.set(otherUserId, existing);
             });
 
             // After merging firestore entries, rebuild users list and set state
             const users = Array.from(uniqueUsers.values())
+              .filter(user => {
+                const displayName = getDisplayName(user);
+                return displayName && displayName.toLowerCase() !== 'unknown user';
+              })
               .sort((a, b) => {
                 const ta = a.lastMessageAt ? new Date(a.lastMessageAt.seconds ? a.lastMessageAt.seconds * 1000 : a.lastMessageAt).getTime() : 0;
                 const tb = b.lastMessageAt ? new Date(b.lastMessageAt.seconds ? b.lastMessageAt.seconds * 1000 : b.lastMessageAt).getTime() : 0;
@@ -163,51 +223,56 @@ const ChatInterface = () => {
         }
       }
 
-      // Also load any existing localStorage chats (chat_{id1}_{id2})
-      try {
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (!key || !key.startsWith('chat_')) continue;
-          const messagesJSON = localStorage.getItem(key);
-          if (!messagesJSON) continue;
-          const msgs = JSON.parse(messagesJSON);
-          if (!Array.isArray(msgs) || msgs.length === 0) continue;
-
-          // derive other user id from key (chat_<idA>_<idB>)
-          const idPart = key.replace('chat_', '');
-          const parts = idPart.split('_');
-          const otherId = parts.find(p => p !== currentUserId) || parts[0];
-
-          const lastMsg = msgs[msgs.length - 1];
-          const existing = uniqueUsers.get(otherId) || {
-            id: otherId,
-            name: otherId,
-            email: '',
-            itemName: '',
-            itemImage: null,
-            borrowRequestId: null,
-            lastActivity: null,
-            lastMessage: '',
-            lastMessageAt: null
-          };
-
-          existing.lastMessage = lastMsg.text || lastMsg.message || existing.lastMessage;
-          existing.lastMessageAt = lastMsg.timestamp || lastMsg.createdAt || new Date().toISOString();
-
-          uniqueUsers.set(otherId, existing);
-        }
-      } catch (err) {
-        console.warn('Error loading localStorage chats', err);
-      }
-
       const users = Array.from(uniqueUsers.values())
+        .filter(user => {
+          const displayName = getDisplayName(user);
+          const name = (user.name || '').toString().trim().toLowerCase();
+          
+          const blockedNames = [
+            'unknown user', 'user', 'another user', 'demo user', 'test user',
+            'borrower', 'item owner', 'chat user', 'new user', 'temp user',
+            'guest', 'anonymous', 'placeholder', 'default user', 'sample user'
+          ];
+          
+          const hasValidName = displayName && 
+            displayName.trim().length > 2 && 
+            !blockedNames.includes(displayName.toLowerCase()) &&
+            !displayName.toLowerCase().startsWith('user') &&
+            !/^user\d*$/i.test(displayName); // Block "User", "User1", etc.
+            
+          const hasRealName = name && 
+            name.length > 2 && 
+            !blockedNames.includes(name) &&
+            name !== user.id.toLowerCase() &&
+            !name.startsWith('new_') &&
+            !name.startsWith('temp') &&
+            !name.startsWith('user') &&
+            !name.includes('temp') &&
+            !/^user\d*$/i.test(user.name || ''); // Block original name variations
+            
+          const hasMessages = user.lastMessage && user.lastMessage.trim().length > 0;
+          
+          const isValid = hasValidName && hasMessages && hasRealName;
+          
+          if (!isValid) {
+            console.log('❌ ChatInterface: Blocked placeholder user:', {
+              id: user.id,
+              name: user.name,
+              displayName,
+              reason: !hasRealName ? 'Invalid name' : !hasMessages ? 'No messages' : 'Invalid display name'
+            });
+          }
+          
+          return isValid;
+        })
         .sort((a, b) => {
           const ta = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
           const tb = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
           return tb - ta;
         });
 
-      console.log('Chat users found (merged):', users);
+      console.log('🎯 Final chat users (STRICT filtering):', users);
+      console.log('📊 Total users after filtering:', users.length);
       setChatUsers(users);
 
       if (users.length > 0 && !selectedUser) {
@@ -223,17 +288,11 @@ const ChatInterface = () => {
   const updateLocalChatPreview = (otherUserId, message) => {
     setChatUsers(prev => {
       const map = new Map(prev.map(u => [u.id, { ...u }]));
-      const existing = map.get(otherUserId) || {
-        id: otherUserId,
-        name: otherUserId,
-        email: '',
-        itemName: '',
-        itemImage: null,
-        borrowRequestId: null,
-        lastActivity: null,
-        lastMessage: '',
-        lastMessageAt: null
-      };
+      const existing = map.get(otherUserId);
+      if (!existing) {
+        // Don't create new users without proper names in updateLocalChatPreview
+        return prev;
+      }
       existing.lastMessage = message.text || message;
       existing.lastMessageAt = message.timestamp || new Date().toISOString();
       map.set(otherUserId, existing);
@@ -378,7 +437,7 @@ const ChatInterface = () => {
                   }
                 >
                           <div className="flex justify-between items-center">
-                            <h3 className="font-medium text-gray-900">{getDisplayName(user)}</h3>
+                            <h3 className="font-medium text-gray-900">{getDisplayName(user) || 'User'}</h3>
                             <span className="text-xs text-gray-500">{formatRelativeTime(user.lastMessageAt || user.lastMessageTime)}</span>
                           </div>
                           <p className="text-sm text-gray-600">📦 {user.itemName || (user.items && user.items[0]) || 'Chat Item'}</p>
@@ -398,7 +457,7 @@ const ChatInterface = () => {
         {selectedUser ? (
           <React.Fragment>
             <div className="p-4 bg-white border-b border-gray-200">
-              <h3 className="font-medium text-gray-900">{getDisplayName(selectedUser)}</h3>
+              <h3 className="font-medium text-gray-900">{getDisplayName(selectedUser) || 'User'}</h3>
               <p className="text-sm text-gray-500">Item: {selectedUser.itemName}</p>
             </div>
 

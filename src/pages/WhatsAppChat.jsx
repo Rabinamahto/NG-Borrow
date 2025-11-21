@@ -13,9 +13,14 @@ const WhatsAppChat = () => {
   const [chatUsers, setChatUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const searchInputRef = useRef(null);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const [currentChatId, setCurrentChatId] = useState(null);
+  const messageInputRef = useRef(null);
+  const emojiButtonRef = useRef(null);
+  const emojiPickerRef = useRef(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   // helper: parse different timestamp shapes to ms since epoch
   const parseTimeToMs = (t) => {
     if (!t) return 0;
@@ -48,9 +53,8 @@ const WhatsAppChat = () => {
   // debugInfo removed for production: on-screen debug panel was removed
   
   const getDisplayName = (user) => {
-    if (!user) return 'Unknown User';
-    return (
-      user.name ||
+    if (!user) return null;
+    const name = user.name ||
       user.otherUserName ||
       user.withUserName ||
       user.borrowerName ||
@@ -58,9 +62,8 @@ const WhatsAppChat = () => {
       user.receiverName ||
       user.senderName ||
       user.email ||
-      user.otherUserEmail ||
-      'Unknown User'
-    );
+      user.otherUserEmail;
+    return name && name.trim() ? name.trim() : null;
   };
   const currentUser = auth?.currentUser;
   const [searchParams] = useSearchParams();
@@ -129,26 +132,11 @@ const WhatsAppChat = () => {
     };
   }, []);
 
-  // If a chat is opened but that user is not yet in the list, add them so left column shows the active chat
-  useEffect(() => {
-    try {
-      if (!selectedUser) return;
-      const selId = selectedUser?.id || selectedUser?.uid || selectedUser?.userId || selectedUser?.otherUserId || selectedUser?.borrowerId || selectedUser?.itemOwnerId || (typeof selectedUser === 'string' ? selectedUser : null);
-      if (!selId) return;
-      const selName = getDisplayName(selectedUser);
-      const normalized = { id: selId, name: selName, ...selectedUser };
-
-      setChatUsers(prev => {
-        const list = Array.isArray(prev) ? prev.slice() : [];
-        if (list.find(u => u.id === selId)) return list;
-        const next = [normalized, ...list];
-        try { localStorage.setItem('chatUsers', JSON.stringify(next)); } catch (e) {}
-        return next;
-      });
-    } catch (err) {
-      console.warn('Failed to ensure selected user in chatUsers', err);
-    }
-  }, [selectedUser]);
+  // DISABLED: Do not automatically add selected users to chat list
+  // Users will only appear after actual message exchange
+  // useEffect(() => {
+  //   // This would automatically add users on selection - DISABLED
+  // }, [selectedUser]);
 
   // Request browser notification permission once
   useEffect(() => {
@@ -170,7 +158,40 @@ const WhatsAppChat = () => {
 
         setChatUsers(prev => {
           const map = new Map();
-          updated.forEach(c => map.set(c.id, c));
+          
+          // Apply strict filtering to Firestore updates too
+          updated.forEach(c => {
+            // Only add if it has real messages and real name
+            const otherUser = c.otherUser || {};
+            const name = (otherUser.name || '').toString().trim().toLowerCase();
+            const hasLastMessage = c.lastMessage && c.lastMessage.toString().trim().length > 0;
+            
+            // Apply same strict filtering as localStorage
+            const blockedNames = [
+              'unknown user', 'user', 'another user', 'demo user', 'test user',
+              'borrower', 'item owner', 'chat user', 'new user', 'temp user',
+              'guest', 'anonymous', 'placeholder', 'default user', 'sample user'
+            ];
+            
+            const hasValidName = name && 
+              name.length > 2 && 
+              !blockedNames.includes(name) &&
+              !name.startsWith('user') &&
+              !/^user\d*$/i.test(otherUser.name || '');
+            
+            if (hasLastMessage && hasValidName) {
+              map.set(c.id, c);
+              console.log('✅ Firestore: Added user with valid name and messages:', otherUser.name);
+            } else {
+              console.log('❌ Firestore: Blocked user:', {
+                name: otherUser.name,
+                hasLastMessage,
+                hasValidName,
+                reason: !hasLastMessage ? 'No messages' : 'Invalid name'
+              });
+            }
+          });
+          
           (prev || []).forEach(p => { if (!map.has(p.id)) map.set(p.id, p); });
           return Array.from(map.values());
         });
@@ -224,14 +245,9 @@ const WhatsAppChat = () => {
           avatar: userName.charAt(0).toUpperCase()
         };
         
-        // Add to chatUsers if not already there
-        setChatUsers(prevUsers => {
-          const exists = prevUsers.find(u => u.id === userId);
-          if (!exists) {
-            return [...prevUsers, targetUser];
-          }
-          return prevUsers;
-        });
+        // DO NOT automatically add URL parameter users to chat list
+        // They will only appear after sending actual messages
+        console.log('🚫 URL user created but NOT added to chat list:', userName);
       }
       
       handleUserSelect(targetUser);
@@ -276,7 +292,6 @@ const WhatsAppChat = () => {
             const updated = { ...me, id: selectedUser.id, lastMessage: lastText, lastMessageTime: lastTime };
             let next = [updated, ...others];
             next = sortByLastMessage(next);
-            try { localStorage.setItem('chatUsers', JSON.stringify(next)); } catch (e) {}
             return next;
           });
         }
@@ -291,9 +306,112 @@ const WhatsAppChat = () => {
     return () => unsubscribe();
   }, [currentChatId, currentUser]);
 
+  // Utility function to completely clear placeholder users including "User"
+  const clearAllPlaceholderUsers = () => {
+    try {
+      console.log('🗑️ Starting aggressive placeholder user cleanup...');
+      
+      // Clear state immediately
+      setChatUsers([]);
+      
+      // Clear from localStorage
+      localStorage.removeItem('chatUsers');
+      
+      // Clear ALL localStorage chat conversations with placeholder users
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('chat_')) {
+          try {
+            const msgs = JSON.parse(localStorage.getItem(key) || '[]');
+            const hasPlaceholders = msgs.some(msg => {
+              const senderName = (msg.senderName || '').toLowerCase();
+              const receiverName = (msg.receiverName || '').toLowerCase();
+              
+              return senderName === 'user' || receiverName === 'user' ||
+                     /^user\d*$/i.test(msg.senderName || '') ||
+                     /^user\d*$/i.test(msg.receiverName || '') ||
+                     senderName.includes('placeholder') ||
+                     receiverName.includes('placeholder');
+            });
+            
+            if (hasPlaceholders) {
+              keysToRemove.push(key);
+            }
+          } catch (e) {
+            keysToRemove.push(key);
+          }
+        }
+      }
+      
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+        console.log('🗑️ Removed placeholder conversation:', key);
+      });
+      
+      // Reload chat users to reflect changes
+      setTimeout(() => {
+        loadChatUsers();
+        console.log('✅ Placeholder cleanup complete, reloaded chat users');
+      }, 100);
+      
+    } catch (e) {
+      console.error('Error clearing placeholder users:', e);
+    }
+  };
+
   const loadChatUsers = () => {
     try {
       console.log('🔄 Starting loadChatUsers function...');
+      console.log('🧹 CLEARING ALL CACHED CHAT USERS - Starting fresh');
+      
+      // Clear any existing state first
+      setChatUsers([]);
+      
+      // Clear ALL localStorage chat-related data to remove placeholder users
+      try {
+        localStorage.removeItem('chatUsers');
+        // Also clear any individual chat conversations with placeholder users
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('chat_')) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => {
+          try {
+            const msgs = JSON.parse(localStorage.getItem(key) || '[]');
+            // Remove chats that only have placeholder user names (case-insensitive)
+            const hasPlaceholderUsers = msgs.some(msg => {
+              const senderName = (msg.senderName || '').toLowerCase();
+              const receiverName = (msg.receiverName || '').toLowerCase();
+              
+              const blockedNames = [
+                'user', 'another user', 'demo user', 'test user', 
+                'borrower', 'item owner', 'chat user', 'unknown user',
+                'guest', 'anonymous', 'placeholder'
+              ];
+              
+              return blockedNames.includes(senderName) || 
+                     blockedNames.includes(receiverName) ||
+                     /^user\d*$/i.test(msg.senderName || '') ||
+                     /^user\d*$/i.test(msg.receiverName || '');
+            });
+            if (hasPlaceholderUsers) {
+              localStorage.removeItem(key);
+              console.log('🗑️ Removed placeholder chat:', key);
+            }
+          } catch (e) {
+            localStorage.removeItem(key);
+            console.log('🗑️ Removed corrupted chat:', key);
+          }
+        });
+        console.log('🧹 Cleared all localStorage chat data');
+      } catch (e) {
+        console.log('Could not clear localStorage');
+      }
+      
       // Use actual current user if logged in, otherwise fallback to demo-user
       const currentUserId = currentUser?.uid || currentUser?.email || 'demo-user';
       console.log('👤 Current user ID:', currentUserId);
@@ -307,7 +425,18 @@ const WhatsAppChat = () => {
       
       // Load existing chat users from localStorage to maintain history
       const existingChatsJSON = localStorage.getItem('chatUsers');
-      const existingChats = existingChatsJSON ? JSON.parse(existingChatsJSON) : [];
+      let existingChats = existingChatsJSON ? JSON.parse(existingChatsJSON) : [];
+      // Clean out placeholder/unknown entries saved previously
+      const cleanedExisting = (existingChats || []).filter(u => {
+        const name = (u && (u.name || '')).toString().trim();
+        const hasName = name && name.toLowerCase() !== 'unknown user';
+        const hasUseful = hasName || (u && u.email) || u.borrowRequestId || u.itemOwnerId || (u && u.itemName) || (u && u.items && u.items.length > 0) || u.lastMessage;
+        return !!hasUseful;
+      });
+      if (cleanedExisting.length !== (existingChats || []).length) {
+        try { localStorage.setItem('chatUsers', JSON.stringify(cleanedExisting)); } catch (e) {}
+        existingChats = cleanedExisting;
+      }
       console.log('💬 Existing chat users:', existingChats);
       
       // Also check for any chat conversations that exist in localStorage
@@ -391,82 +520,168 @@ const WhatsAppChat = () => {
         // For borrower: add item owner to chat list
         if (request.borrowerId === currentUserId && request.itemOwnerId) {
           console.log('👤 Current user is borrower, adding owner:', request.itemOwnerName);
-          if (!uniqueUsers.has(request.itemOwnerId)) {
-            console.log('➕ Creating new owner user:', request.itemOwnerName);
-            uniqueUsers.set(request.itemOwnerId, {
-              id: request.itemOwnerId,
-              name: request.itemOwnerName || 'Item Owner',
-              email: request.itemOwnerEmail || '',
-              phone: request.itemOwnerPhone || '',
-              itemName: request.itemTitle || 'Unknown Item',
-              itemImage: request.itemImage || null,
-              itemCategory: request.itemCategory || '',
-              borrowRequestId: request.borrowRequestId,
-              lastSeen: 'Online',
-              avatar: request.itemOwnerName?.charAt(0)?.toUpperCase() || 'O',
-              role: 'owner',
-              items: [request.itemTitle],
-              lastMessage: '',
-              lastMessageTime: null
-            });
-          } else {
-            console.log('📝 Adding item to existing owner user:', request.itemTitle);
-            // Add item to existing user's items list
-            const existingUser = uniqueUsers.get(request.itemOwnerId);
-            if (!existingUser.items) existingUser.items = [];
-            if (!existingUser.items.includes(request.itemTitle)) {
-              existingUser.items.push(request.itemTitle);
+          // Only add the owner to the visible list if there is an existing
+          // conversation in localStorage (i.e., messages exchanged), otherwise
+          // keep them hidden until a message/chat occurs.
+          const ownerId = request.itemOwnerId;
+          const hasConversation = allChatConversations.some(c => c.chatKey.includes(ownerId));
+          if (hasConversation) {
+            if (!uniqueUsers.has(ownerId)) {
+              console.log('➕ Creating new owner user (has conversation):', request.itemOwnerName);
+              uniqueUsers.set(ownerId, {
+                id: ownerId,
+                name: request.itemOwnerName || 'Item Owner',
+                email: request.itemOwnerEmail || '',
+                phone: request.itemOwnerPhone || '',
+                itemName: request.itemTitle || 'Unknown Item',
+                itemImage: request.itemImage || null,
+                itemCategory: request.itemCategory || '',
+                borrowRequestId: request.borrowRequestId,
+                lastSeen: 'Online',
+                avatar: request.itemOwnerName?.charAt(0)?.toUpperCase() || 'O',
+                role: 'owner',
+                items: [request.itemTitle],
+                lastMessage: '',
+                lastMessageTime: null
+              });
+            } else {
+              console.log('📝 Adding item to existing owner user:', request.itemTitle);
+              // Add item to existing user's items list
+              const existingUser = uniqueUsers.get(ownerId);
+              if (!existingUser.items) existingUser.items = [];
+              if (!existingUser.items.includes(request.itemTitle)) {
+                existingUser.items.push(request.itemTitle);
+              }
             }
+          } else {
+            console.log('Skipping owner (no conversation yet):', ownerId);
           }
         }
         
         // For owner: add borrower to chat list
         if (request.itemOwnerId === currentUserId && request.borrowerId) {
           console.log('👤 Current user is owner, adding borrower:', request.borrowerName);
-          if (!uniqueUsers.has(request.borrowerId)) {
-            console.log('➕ Creating new borrower user:', request.borrowerName);
-            uniqueUsers.set(request.borrowerId, {
-              id: request.borrowerId,
-              name: request.borrowerName || 'Borrower',
-              email: request.borrowerEmail || '',
-              phone: request.borrowerPhone || '',
-              itemName: request.itemTitle || 'Unknown Item',
-              itemImage: request.itemImage || null,
-              itemCategory: request.itemCategory || '',
-              borrowRequestId: request.borrowRequestId,
-              lastSeen: 'Online',
-              avatar: request.borrowerName?.charAt(0)?.toUpperCase() || 'B',
-              role: 'borrower',
-              items: [request.itemTitle],
-              lastMessage: '',
-              lastMessageTime: null
-            });
-          } else {
-            console.log('📝 Adding item to existing borrower user:', request.itemTitle);
-            // Add item to existing user's items list
-            const existingUser = uniqueUsers.get(request.borrowerId);
-            if (!existingUser.items) existingUser.items = [];
-            if (!existingUser.items.includes(request.itemTitle)) {
-              existingUser.items.push(request.itemTitle);
+          // Only add the borrower if there is an existing conversation
+          const borrowerId = request.borrowerId;
+          const hasConversation = allChatConversations.some(c => c.chatKey.includes(borrowerId));
+          if (hasConversation) {
+            if (!uniqueUsers.has(borrowerId)) {
+              console.log('➕ Creating new borrower user (has conversation):', request.borrowerName);
+              uniqueUsers.set(borrowerId, {
+                id: borrowerId,
+                name: request.borrowerName || 'Borrower',
+                email: request.borrowerEmail || '',
+                phone: request.borrowerPhone || '',
+                itemName: request.itemTitle || 'Unknown Item',
+                itemImage: request.itemImage || null,
+                itemCategory: request.itemCategory || '',
+                borrowRequestId: request.borrowRequestId,
+                lastSeen: 'Online',
+                avatar: request.borrowerName?.charAt(0)?.toUpperCase() || 'B',
+                role: 'borrower',
+                items: [request.itemTitle],
+                lastMessage: '',
+                lastMessageTime: null
+              });
+            } else {
+              console.log('📝 Adding item to existing borrower user:', request.itemTitle);
+              const existingUser = uniqueUsers.get(borrowerId);
+              if (!existingUser.items) existingUser.items = [];
+              if (!existingUser.items.includes(request.itemTitle)) {
+                existingUser.items.push(request.itemTitle);
+              }
             }
+          } else {
+            console.log('Skipping borrower (no conversation yet):', borrowerId);
           }
         }
       });
 
-      // Sort users by last message time (most recent first)
-      const users = Array.from(uniqueUsers.values()).sort((a, b) => {
-        const aTime = a.lastMessageTime ? new Date(a.lastMessageTime) : new Date(0);
-        const bTime = b.lastMessageTime ? new Date(b.lastMessageTime) : new Date(0);
-        return bTime - aTime;
+      // Sort users by last message time (most recent first), but filter out
+      // placeholder/unknown users and keep ordering stable when timestamps tie.
+      const prevOrderMap = new Map((chatUsers || []).map((u, i) => [u.id, i]));
+      let users = Array.from(uniqueUsers.values());
+
+      // ULTRA STRICT FILTERING: Block all placeholder and generic names (case-insensitive)
+      users = users.filter(u => {
+        const name = (u.name || '').toString().trim().toLowerCase();
+        const originalName = (u.name || '').toString().trim();
+        
+        // Block any variation of common placeholder names
+        const blockedNames = [
+          'unknown user', 'user', 'another user', 'demo user', 'test user',
+          'borrower', 'item owner', 'chat user', 'new user', 'temp user',
+          'guest', 'anonymous', 'placeholder', 'default user', 'sample user'
+        ];
+        
+        const hasRealName = name && 
+          name.length > 2 && 
+          !blockedNames.includes(name) &&
+          name !== u.id.toLowerCase() &&
+          !name.startsWith('new_') &&
+          !name.startsWith('temp') &&
+          !name.startsWith('user') &&
+          !name.includes('temp') &&
+          !name.includes('placeholder') &&
+          !name.includes('test') &&
+          !/^user\d*$/i.test(originalName); // Block "User", "User1", "user123", etc.
+        
+        const hasMessages = u.lastMessage && u.lastMessage.toString().trim().length > 0;
+        const hasValidData = hasRealName && hasMessages;
+        
+        if (!hasValidData) {
+          console.log('❌ WhatsApp: Blocked placeholder user:', {
+            id: u.id,
+            name: u.name,
+            reason: !hasRealName ? 'Invalid name' : 'No messages'
+          });
+        }
+        
+        return hasValidData;
       });
-      
-      console.log('✅ Final chat users (sorted by recent activity):', users);
+
+      users.sort((a, b) => {
+        const aTime = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+        const bTime = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+        if (bTime !== aTime) return bTime - aTime;
+        const ai = prevOrderMap.has(a.id) ? prevOrderMap.get(a.id) : Number.MAX_SAFE_INTEGER;
+        const bi = prevOrderMap.has(b.id) ? prevOrderMap.get(b.id) : Number.MAX_SAFE_INTEGER;
+        if (ai !== bi) return ai - bi;
+        return (a.name || '').toString().localeCompare((b.name || '').toString());
+      });
+
+      console.log('✅ Final chat users (filtered & sorted):', users);
       console.log('📊 Users count:', users.length);
-      
-      // Save to localStorage to maintain across refreshes
-      localStorage.setItem('chatUsers', JSON.stringify(users));
-      
+
+      // Save to localStorage only for anonymous/offline mode. When a user is
+      // authenticated we rely on Firestore (onSnapshot) as the source of truth.
+      if (!currentUser) {
+        try { localStorage.setItem('chatUsers', JSON.stringify(users)); } catch (e) {}
+      }
+
       setChatUsers(users);
+
+      // Also persist cleaned existing chats into Firestore for the current user
+      // so they are available across devices. We write a minimal presence doc
+      // and avoid touching ordering fields (lastUpdated) here to prevent
+      // accidentally bumping conversations.
+      try {
+        if (currentUser && currentUser.uid && Array.isArray(existingChats) && existingChats.length > 0) {
+          existingChats.forEach(u => {
+            try {
+              if (!u || !u.id) return;
+              const chatId = [currentUser.uid, u.id].sort().join('_');
+              const presence = {
+                otherUser: { uid: u.id, name: u.name || u.email || u.itemName || '' },
+                createdAt: serverTimestamp()
+              };
+              setDoc(doc(db, 'users', currentUser.uid, 'chats', chatId), presence, { merge: true }).catch(() => {});
+            } catch (e) { /* ignore per-item errors */ }
+          });
+        }
+      } catch (e) {
+        // ignore migration errors
+      }
       setLoading(false);
       
       console.log('✅ Chat users state updated, loading set to false');
@@ -570,13 +785,37 @@ const WhatsAppChat = () => {
       });
     console.log('sendMessage -> addDoc succeeded', docRef.id);
 
+      // Check if selectedUser has valid name before creating chat metadata
+      const userName = selectedUser.name || selectedUser.itemOwnerName || selectedUser.borrowerName || '';
+      const name = userName.toString().trim().toLowerCase();
+      
+      const blockedNames = [
+        'unknown user', 'user', 'another user', 'demo user', 'test user',
+        'borrower', 'item owner', 'chat user', 'new user', 'temp user',
+        'guest', 'anonymous', 'placeholder', 'default user', 'sample user'
+      ];
+      
+      const hasValidName = name && 
+        name.length > 2 && 
+        !blockedNames.includes(name) &&
+        !name.startsWith('user') &&
+        !/^user\d*$/i.test(userName);
+      
+      if (!hasValidName) {
+        console.log('🚫 sendMessage: Not creating chat metadata for invalid user name:', userName);
+        // Still save the message but don't create chat metadata that would appear in list
+        setNewMessage('');
+        setSending(false);
+        return;
+      }
+      
       // update chat meta for both participants so left-list stays current and notifications work
       try {
         const lastMsgMeta = { id: docRef.id, text: messageData.text, senderId: messageData.senderId, timestamp: serverTimestamp() };
         const meta = {
           lastMessage: lastMsgMeta,
           lastUpdated: serverTimestamp(),
-          otherUser: { uid: selectedUser.id, name: selectedUser.name || selectedUser.itemOwnerName || selectedUser.borrowerName }
+          otherUser: { uid: selectedUser.id, name: userName }
         };
 
         await setDoc(doc(db, 'users', currentUser.uid, 'chats', chatId), meta, { merge: true });
@@ -587,20 +826,9 @@ const WhatsAppChat = () => {
         } catch (e) {
           // ignore if update fails
         }
-        // Also update local chatUsers state so UI reorders immediately
-        try {
-          const now = new Date().toISOString();
-          setChatUsers(prev => {
-            const list = Array.isArray(prev) ? prev.slice() : [];
-            const others = list.filter(u => u.id !== selectedUser.id);
-            const me = list.find(u => u.id === selectedUser.id) || selectedUser;
-            const updated = { ...me, id: selectedUser.id, lastMessage: messageData.text, lastMessageTime: now };
-            let next = [updated, ...others];
-            next = sortByLastMessage(next);
-            try { localStorage.setItem('chatUsers', JSON.stringify(next)); } catch (e) {}
-            return next;
-          });
-        } catch (e) { /* ignore */ }
+        // DO NOT automatically add users to chat list when sending messages
+        // Let the Firestore listener handle chat list updates based on actual message history
+        console.log('📤 Message sent but chat list will update via Firestore listener only');
       } catch (metaErr) {
         console.warn('Failed to update chat meta for users', metaErr);
       }
@@ -775,6 +1003,20 @@ const WhatsAppChat = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
+  // Close emoji picker if click happens outside the picker/button
+  useEffect(() => {
+    const handler = (e) => {
+      const btn = emojiButtonRef.current;
+      const picker = emojiPickerRef.current;
+      if (!picker && !btn) return;
+      if (picker && picker.contains(e.target)) return;
+      if (btn && btn.contains(e.target)) return;
+      setShowEmojiPicker(false);
+    };
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, []);
+
   // Handle window resize for mobile responsiveness
   useEffect(() => {
     const handleResize = () => {
@@ -816,12 +1058,32 @@ const WhatsAppChat = () => {
       if (currentUid && user?.id) {
         const chatId = [currentUid, user.id].sort().join('_');
 
-        // Update user's chat doc to ensure it exists (keeps left-list persistent)
+        // Check if user has valid name before creating presence doc
+        const userName = user.name || user.itemOwnerName || user.borrowerName || '';
+        const name = userName.toString().trim().toLowerCase();
+        
+        const blockedNames = [
+          'unknown user', 'user', 'another user', 'demo user', 'test user',
+          'borrower', 'item owner', 'chat user', 'new user', 'temp user',
+          'guest', 'anonymous', 'placeholder', 'default user', 'sample user'
+        ];
+        
+        const hasValidName = name && 
+          name.length > 2 && 
+          !blockedNames.includes(name) &&
+          !name.startsWith('user') &&
+          !/^user\d*$/i.test(userName);
+        
+        if (!hasValidName) {
+          console.log('🚫 handleUserSelect: Not creating presence doc for invalid user name:', userName);
+          return; // Don't create Firestore presence for invalid users
+        }
+        
         // Create a minimal presence doc for the current user only.
         // IMPORTANT: do NOT set `lastUpdated` or `lastMessage` here —
         // those fields control ordering and should only change when a message is sent.
         const presence = {
-          otherUser: { uid: user.id, name: user.name || user.itemOwnerName || user.borrowerName },
+          otherUser: { uid: user.id, name: userName },
           createdAt: serverTimestamp()
         };
 
@@ -834,27 +1096,9 @@ const WhatsAppChat = () => {
           // ignore firestore runtime problems
         }
 
-        // Also ensure localStorage has this user in chatUsers for offline persistence
-        try {
-          const stored = JSON.parse(localStorage.getItem('chatUsers') || '[]');
-          if (!stored.find(u => u.id === user.id)) {
-            let toSave = [{ id: user.id, name: user.name || user.itemOwnerName || user.borrowerName, itemName: user.itemName || user.items?.[0] || '' }, ...stored];
-            toSave = sortByLastMessage(toSave);
-            localStorage.setItem('chatUsers', JSON.stringify(toSave));
-            setChatUsers(prev => {
-              if (!prev) return toSave;
-              if (prev.find(u => u.id === user.id)) return prev;
-              const next = [ { id: user.id, name: user.name || user.itemOwnerName || user.borrowerName, itemName: user.itemName || user.items?.[0] || '' }, ...prev ];
-              return sortByLastMessage(next);
-            });
-          } else {
-            // ensure unread cleared locally
-            const updated = stored.map(u => u.id === user.id ? { ...u, unreadCount: 0 } : u);
-            localStorage.setItem('chatUsers', JSON.stringify(updated));
-          }
-        } catch (lsErr) {
-          // ignore localStorage errors
-        }
+        // DO NOT automatically add users to chat list on selection
+        // Users will only appear after actual messages are sent
+        console.log('🚫 User selected but NOT added to chat list automatically:', user.name || user.id);
       }
     } catch (err) { console.error('handleUserSelect error', err); }
   };
@@ -1051,25 +1295,63 @@ const WhatsAppChat = () => {
 
         {/* Search */}
         <div className="p-3 bg-gray-50 border-b">
-          <div className="bg-white rounded-lg px-3 py-2 text-sm flex items-center">
-            <input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const q = searchTerm.trim().toLowerCase();
-                  if (!q) return;
-                  const found = chatUsers.find(u => (u.name || '').toLowerCase().includes(q) || (u.itemName || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q));
-                  if (found) {
-                    handleUserSelect(found);
+          <div className="relative max-w-full">
+            <div className="bg-white rounded-lg px-3 py-2 text-sm flex items-center relative">
+              <input
+                ref={searchInputRef}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const q = searchTerm.trim().toLowerCase();
+                    if (!q) return;
+                    const found = chatUsers.find(u => (u.name || '').toLowerCase().includes(q) || (u.itemName || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q));
+                    if (found) {
+                      handleUserSelect(found);
+                      setSearchTerm('');
+                      searchInputRef.current?.blur();
+                    } else {
+                      // DO NOT create temporary users from search
+                      console.log('🚫 Search term not found, but NOT creating temporary user:', q);
+                      setSearchTerm('');
+                      searchInputRef.current?.blur();
+                    }
                   }
-                }
-              }}
-              placeholder="Search or start new chat"
-              className="w-full px-2 py-2 text-sm focus:outline-none"
-            />
-            {searchTerm && (
-              <button onClick={() => setSearchTerm('')} className="text-xs text-gray-500 ml-2">Clear</button>
+                }}
+                placeholder="Search or start new chat"
+                className="w-full pr-10 px-2 py-2 text-sm focus:outline-none"
+              />
+              {searchTerm && (
+                <button onClick={() => { setSearchTerm(''); searchInputRef.current?.focus(); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">Clear</button>
+              )}
+            </div>
+
+            {/* Live matches dropdown aligned to input */}
+            {searchTerm.trim().length > 0 && (
+              (() => {
+                const q = searchTerm.trim().toLowerCase();
+                const matches = chatUsers.filter(u => {
+                  const name = (u.name || '').toLowerCase();
+                  const item = (u.itemName || u.items?.[0] || '').toLowerCase();
+                  const email = (u.email || '').toLowerCase();
+                  return name.includes(q) || item.includes(q) || email.includes(q);
+                }).slice(0, 6);
+
+                return (
+                  <div className="absolute left-0 right-0 mt-1 bg-white border rounded shadow-md z-50 max-h-48 overflow-y-auto">
+                    {matches.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-gray-500">No matching chats. Press Enter to start a new chat.</div>
+                    ) : (
+                      matches.map(u => (
+                        <div key={u.id} onClick={() => { handleUserSelect(u); setSearchTerm(''); }} className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm flex items-center justify-between">
+                          <div className="truncate">{getDisplayName(u) || 'User'} <span className="text-xs text-gray-400">{u.itemName ? `• ${u.itemName}` : ''}</span></div>
+                          <div className="text-xs text-gray-400 ml-2">{formatRelativeTime(u.lastMessageTime || u.lastMessageAt)}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                );
+              })()
             )}
           </div>
         </div>
@@ -1082,12 +1364,21 @@ const WhatsAppChat = () => {
               <div>Current: {(currentUser?.uid || currentUser?.email || 'demo-user').substring(0, 20)}...</div>
               <div>Requests: {JSON.parse(localStorage.getItem('borrowRequests') || '[]').length}, LS Users: {JSON.parse(localStorage.getItem('chatUsers') || '[]').length}</div>
             </div>
-            <button 
-              onClick={loadChatUsers}
-              className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-            >
-              🔄
-            </button>
+            <div className="flex gap-1">
+              <button 
+                onClick={clearAllPlaceholderUsers}
+                className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-800 text-xs rounded"
+                title="Clear placeholder users like 'user', 'another user'"
+              >
+                🗑️
+              </button>
+              <button 
+                onClick={loadChatUsers}
+                className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+              >
+                🔄
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1106,7 +1397,7 @@ const WhatsAppChat = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center mb-1">
-                          <h3 className="font-semibold text-gray-900 truncate mr-2">{getDisplayName(selectedUser)}</h3>
+                          <h3 className="font-semibold text-gray-900 truncate mr-2">{getDisplayName(selectedUser) || 'User'}</h3>
                           <span className="text-xs text-gray-500">{formatRelativeTime(selectedUser?.lastMessageAt || selectedUser?.lastMessageTime)}</span>
                         </div>
                         <p className="text-sm text-gray-600 truncate">📦 {selectedUser.itemName || 'Chat Item'}</p>
@@ -1184,7 +1475,7 @@ const WhatsAppChat = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1">
                       <div className="flex items-center">
-                        <h3 className="font-semibold text-gray-900 truncate mr-2">{getDisplayName(user)}</h3>
+                        <h3 className="font-semibold text-gray-900 truncate mr-2">{getDisplayName(user) || 'User'}</h3>
                         {user.role === 'owner' && (
                           <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
                             Owner
@@ -1252,10 +1543,10 @@ const WhatsAppChat = () => {
                   </button>
                 )}
                 <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
-                  {getDisplayName(selectedUser).charAt(0).toUpperCase()}
+                  {(getDisplayName(selectedUser) || 'U').charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="font-semibold">{getDisplayName(selectedUser)}</h3>
+                  <h3 className="font-semibold">{getDisplayName(selectedUser) || 'User'}</h3>
                   <p className="text-xs text-green-100">{selectedUser.lastSeen}</p>
                 </div>
               </div>
@@ -1384,9 +1675,58 @@ const WhatsAppChat = () => {
             {/* Message Input */}
               <div className="bg-white p-4 border-t sticky bottom-0 z-10">
               <div className="flex items-center space-x-3">
-                <BsEmojiSmile className="w-6 h-6 text-gray-500 cursor-pointer hover:text-gray-700" />
+                <div className="relative">
+                  <button
+                    ref={emojiButtonRef}
+                    type="button"
+                    onClick={() => setShowEmojiPicker(v => !v)}
+                    className="p-1 rounded hover:bg-gray-100"
+                    aria-label="Toggle emoji picker"
+                  >
+                    <BsEmojiSmile className="w-6 h-6 text-gray-500 cursor-pointer hover:text-gray-700" />
+                  </button>
+
+                  {/* Emoji picker popup */}
+                  {showEmojiPicker && (
+                    <div ref={emojiPickerRef} className="absolute bottom-12 left-0 bg-white border rounded-md shadow-lg p-2 w-48 z-50">
+                      <div className="grid grid-cols-6 gap-2 text-lg">
+                        {['😊','😂','😍','👍','🎉','🙏','🔥','😉','😅','😢','🤔','🙌'].map((e) => (
+                          <button
+                            key={e}
+                            onClick={() => {
+                              // insert emoji at cursor position in message input
+                              setNewMessage(prev => {
+                                try {
+                                  const input = messageInputRef.current;
+                                  if (input && typeof input.selectionStart === 'number') {
+                                    const start = input.selectionStart;
+                                    const end = input.selectionEnd;
+                                    const next = prev.slice(0, start) + e + prev.slice(end);
+                                    // restore cursor after render
+                                    setTimeout(() => {
+                                      input.selectionStart = input.selectionEnd = start + e.length;
+                                      input.focus();
+                                    }, 0);
+                                    return next;
+                                  }
+                                } catch (err) { /* ignore */ }
+                                return prev + e;
+                              });
+                              setShowEmojiPicker(false);
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded text-center"
+                            aria-label={`Insert ${e}`}
+                          >
+                            {e}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1 relative">
                   <input
+                    ref={messageInputRef}
                     type="text"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
