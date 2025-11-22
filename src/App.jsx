@@ -35,7 +35,8 @@ function AppRoutes() {
   if(loading) return <div>Loading auth...</div>
   return (
     <Router>
-      <Header />
+      {/* Only show Header/Navbar when user is logged in */}
+      {user && <Header />}
       <main className="min-h-[80vh]">
         <Routes>
 
@@ -86,7 +87,8 @@ function AppRoutes() {
 
         </Routes>
       </main>
-      <Footer />
+      {/* Only show Footer when user is logged in */}
+      {user && <Footer />}
     </Router>
   );
 }

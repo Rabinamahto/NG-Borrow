@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Search Test Items</title>
+</head>
+<body>
+    <h1>Adding Search Test Items...</h1>
+    <div id="status">Adding items...</div>
+    
+    <script>
+        // Add sample items that can be searched for
+        const testItems = [
+            {
+                id: 'item_tshirt_001',
+                title: 'Blue Tshirt',
+                description: 'Comfortable cotton tshirt in blue color, size M',
+                category: 'Clothing',
+                condition: 'Good',
+                images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400'],
+                owner: { name: 'John Doe' },
+                ownerId: 'user123',
+                ownerName: 'John Doe',
+                status: 'available',
+                createdAt: new Date().toISOString(),
+                deviceOwnerId: 'device123'
+            },
+            {
+                id: 'item_tshirt_002', 
+                title: 'Red Tshirt',
+                description: 'Stylish red tshirt, perfect for casual wear',
+                category: 'Clothing',
+                condition: 'Like New',
+                images: ['https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400'],
+                owner: { name: 'Jane Smith' },
+                ownerId: 'user456',
+                ownerName: 'Jane Smith',
+                status: 'available',
+                createdAt: new Date().toISOString(),
+                deviceOwnerId: 'device456'
+            },
+            {
+                id: 'item_laptop_001',
+                title: 'MacBook Pro',
+                description: 'MacBook Pro 13 inch, great for work and study',
+                category: 'Electronics',
+                condition: 'Good',
+                images: ['https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400'],
+                owner: { name: 'Alice Johnson' },
+                ownerId: 'user789',
+                ownerName: 'Alice Johnson',
+                status: 'available',
+                createdAt: new Date().toISOString(),
+                deviceOwnerId: 'device789'
+            },
+            {
+                id: 'item_book_001',
+                title: 'Programming Book',
+                description: 'Complete guide to JavaScript programming',
+                category: 'Books',
+                condition: 'Good',
+                images: ['https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400'],
+                owner: { name: 'Bob Wilson' },
+                ownerId: 'user101',
+                ownerName: 'Bob Wilson', 
+                status: 'available',
+                createdAt: new Date().toISOString(),
+                deviceOwnerId: 'device101'
+            },
+            {
+                id: 'item_guitar_001',
+                title: 'Acoustic Guitar',
+                description: 'Beautiful acoustic guitar for music lovers',
+                category: 'Musical Instruments',
+                condition: 'Excellent',
+                images: ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400'],
+                owner: { name: 'Charlie Brown' },
+                ownerId: 'user202',
+                ownerName: 'Charlie Brown',
+                status: 'available',
+                createdAt: new Date().toISOString(),
+                deviceOwnerId: 'device202'
+            }
+        ];
+
+        // Save to localStorage
+        try {
+            localStorage.setItem('browseItems', JSON.stringify(testItems));
+            document.getElementById('status').innerHTML = `
+                <h2>✅ Successfully added ${testItems.length} test items!</h2>
+                <p>Items added:</p>
+                <ul>
+                    ${testItems.map(item => `<li><strong>${item.title}</strong> - ${item.description}</li>`).join('')}
+                </ul>
+                <p><a href="../" style="color: blue; text-decoration: underline;">Go back to main app</a></p>
+                <p>Try searching for: tshirt, laptop, book, guitar, etc.</p>
+            `;
+        } catch (error) {
+            document.getElementById('status').innerHTML = `<h2>❌ Error adding items: ${error.message}</h2>`;
+        }
+    </script>
+</body>
+</html>

@@ -10,6 +10,8 @@ import BorrowRequestModal from "./BorrowRequestModal"; // Assuming this file exi
 const BrowseItems = ({ maxItems }) => {
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null); 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredItems, setFilteredItems] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -341,6 +343,22 @@ const BrowseItems = ({ maxItems }) => {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  // Filter items based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredItems(items);
+    } else {
+      const query = searchQuery.toLowerCase().trim();
+      const filtered = items.filter(item => 
+        item.title?.toLowerCase().includes(query) ||
+        item.description?.toLowerCase().includes(query) ||
+        item.category?.toLowerCase().includes(query) ||
+        item.condition?.toLowerCase().includes(query)
+      );
+      setFilteredItems(filtered);
+    }
+  }, [items, searchQuery]);
+
   // If we arrived with a state requesting scroll to a specific item, handle it after items load
   useEffect(() => {
     const state = location.state || {};
@@ -379,22 +397,95 @@ const BrowseItems = ({ maxItems }) => {
   }, [location, items, navigate]);
 
   if (!items || items.length === 0) {
-    return <div className="p-6 text-center text-gray-500">No items posted yet.</div>;
+    return (
+      <div className="p-6">
+        {/* Search Bar */}
+        <div className="max-w-md mx-auto mb-8">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search items... (e.g., tshirt, book, laptop)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div className="text-center text-gray-500">No items posted yet.</div>
+      </div>
+    );
   }
 
-  const displayedItems = typeof maxItems === 'number' ? items.slice(0, maxItems) : items;
+  const displayedItems = typeof maxItems === 'number' ? filteredItems.slice(0, maxItems) : filteredItems;
 
   return (
-    <div className="p-6 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {displayedItems.map((it) => (
-        <ItemCard 
-            key={it.id} 
-            item={it} 
-            onBorrowClick={handleBorrowRequest} 
-            onDeleteItem={handleDeleteItem} // Pass the delete handler
-            onReturnItem={handleReturnItem} // Pass the return handler
-        /> 
-      ))}
+    <div className="p-6">
+      {/* Search Bar */}
+      <div className="max-w-md mx-auto mb-8">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search items..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            >
+              <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Search Results Info */}
+      {searchQuery && (
+        <div className="mb-4 text-center text-gray-600">
+          {displayedItems.length > 0 ? (
+            `Found ${displayedItems.length} item${displayedItems.length !== 1 ? 's' : ''} matching "${searchQuery}"`
+          ) : (
+            `No items found matching "${searchQuery}"`
+          )}
+        </div>
+      )}
+
+      {/* Items Grid */}
+      {displayedItems.length > 0 ? (
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {displayedItems.map((it) => (
+            <ItemCard 
+                key={it.id} 
+                item={it} 
+                onBorrowClick={handleBorrowRequest} 
+                onDeleteItem={handleDeleteItem} // Pass the delete handler
+                onReturnItem={handleReturnItem} // Pass the return handler
+            /> 
+          ))}
+        </div>
+      ) : searchQuery ? (
+        <div className="text-center text-gray-500 py-8">
+          <svg className="mx-auto h-12 w-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <p>No items found for "{searchQuery}"</p>
+          <p className="text-sm text-gray-400 mt-2">Try searching with different keywords</p>
+        </div>
+      ) : null}
       
       {/* Borrow Request Modal */}
       {selectedItem && (
