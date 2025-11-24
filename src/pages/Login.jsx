@@ -13,26 +13,26 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    console.log("🔐 Attempting login with:", email);
+  console.log("Attempting login with:", email);
     
     setLoading(true);
     
     try {
       const result = await login(email, password);
-      console.log("🔐 Login result:", result);
+  console.log("Login result:", result);
       
       if (result.success) {
-        console.log("✅ Login successful!");
+  console.log("Login successful!");
         alert("Login successful!");
         // If we have a redirect target from location.state.from, go there.
         const dest = location?.state?.from || "/";
         navigate(dest);
       } else {
-        console.error("❌ Login failed:", result.error);
+  console.error("Login failed:", result.error);
         alert(`Login failed: ${result.error}`);
       }
-    } catch (error) {
-      console.error("❌ Login error:", error);
+  } catch (error) {
+  console.error("Login error:", error);
       alert(`Login error: ${error.message}`);
     } finally {
       setLoading(false);

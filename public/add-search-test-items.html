@@ -86,7 +86,7 @@
         try {
             localStorage.setItem('browseItems', JSON.stringify(testItems));
             document.getElementById('status').innerHTML = `
-                <h2>✅ Successfully added ${testItems.length} test items!</h2>
+                <h2><i class="fa-solid fa-circle-check fa-app-icon"></i> Successfully added ${testItems.length} test items!</h2>
                 <p>Items added:</p>
                 <ul>
                     ${testItems.map(item => `<li><strong>${item.title}</strong> - ${item.description}</li>`).join('')}
@@ -95,7 +95,7 @@
                 <p>Try searching for: tshirt, laptop, book, guitar, etc.</p>
             `;
         } catch (error) {
-            document.getElementById('status').innerHTML = `<h2>❌ Error adding items: ${error.message}</h2>`;
+            document.getElementById('status').innerHTML = `<h2><i class="fa-solid fa-circle-xmark fa-app-icon"></i> Error adding items: ${error.message}</h2>`;
         }
     </script>
 </body>

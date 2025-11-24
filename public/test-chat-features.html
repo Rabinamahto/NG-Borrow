@@ -60,11 +60,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>🧪 Chat Features Test Suite</h1>
+    <h1><i class="fa-solid fa-vial fa-app-icon"></i> Chat Features Test Suite</h1>
         <p>This page will help you test all the new chat features!</p>
 
         <div class="section">
-            <h3>📋 Test Setup</h3>
+            <h3><i class="fa-solid fa-clipboard fa-app-icon"></i> Test Setup</h3>
             <div class="step">
                 <strong>Step 1:</strong> Create chat users with multiple approved requests
                 <button onclick="createTestChatData()">Setup Test Data</button>
@@ -73,7 +73,7 @@
         </div>
 
         <div class="section">
-            <h3>💬 Chat Persistence Test</h3>
+            <h3><i class="fa-solid fa-comments fa-app-icon"></i> Chat Persistence Test</h3>
             <div class="step">
                 <strong>Step 2:</strong> Add test messages to localStorage
                 <button onclick="addTestMessages()">Add Test Messages</button>
@@ -82,30 +82,30 @@
             <div class="step">
                 <strong>Step 3:</strong> Go to chat page and verify:
                 <ul>
-                    <li>✅ Users are visible after refresh</li>
-                    <li>✅ Chat history is preserved</li>
-                    <li>✅ Same user for multiple items shows in one chat</li>
+                    <li><i class="fa-solid fa-circle-check fa-app-icon"></i> Users are visible after refresh</li>
+                    <li><i class="fa-solid fa-circle-check fa-app-icon"></i> Chat history is preserved</li>
+                    <li><i class="fa-solid fa-circle-check fa-app-icon"></i> Same user for multiple items shows in one chat</li>
                 </ul>
                 <button onclick="openChatPage()">Open Chat Page</button>
             </div>
         </div>
 
         <div class="section">
-            <h3>🖱️ Right-Click Features Test</h3>
+            <h3><i class="fa-solid fa-mouse fa-app-icon"></i> Right-Click Features Test</h3>
             <div class="info">
                 <strong>Test Instructions:</strong><br>
                 1. Go to chat page<br>
                 2. Right-click on any message<br>
                 3. Test these options:<br>
-                • 📋 Copy (should copy text to clipboard)<br>
-                • ✏️ Edit (only for your messages)<br>
-                • 🗑️ Delete for Me (removes from your view)<br>
-                • 🗑️ Delete for Everyone (only for your messages)
+                • <i class="fa-solid fa-clipboard fa-app-icon"></i> Copy (should copy text to clipboard)<br>
+                • <i class="fa-solid fa-pen fa-app-icon"></i> Edit (only for your messages)<br>
+                • <i class="fa-solid fa-trash fa-app-icon"></i> Delete for Me (removes from your view)<br>
+                • <i class="fa-solid fa-trash fa-app-icon"></i> Delete for Everyone (only for your messages)
             </div>
         </div>
 
         <div class="section">
-            <h3>🔄 Same User Multiple Requests Test</h3>
+            <h3><i class="fa-solid fa-arrows-rotate fa-app-icon"></i> Same User Multiple Requests Test</h3>
             <div class="step">
                 <strong>Step 4:</strong> Create multiple requests from same user
                 <button onclick="createMultipleRequests()">Create Multiple Requests</button>
@@ -122,7 +122,7 @@
         </div>
 
         <div class="section">
-            <h3>📊 Current Data Status</h3>
+            <h3><i class="fa-solid fa-chart-bar fa-app-icon"></i> Current Data Status</h3>
             <button onclick="showCurrentData()">Show Current Data</button>
             <button onclick="clearAllData()">Clear All Test Data</button>
             <div id="dataStatus"></div>
@@ -195,7 +195,7 @@
             localStorage.setItem('borrowRequests', JSON.stringify(borrowRequests));
             
             document.getElementById('setupStatus').innerHTML = 
-                '<div class="success">✅ Test data created! 3 approved requests with 2 different owners</div>';
+                '<div class="success"><i class="fa-solid fa-circle-check fa-app-icon"></i> Test data created! 3 approved requests with 2 different owners</div>';
         }
 
         function addTestMessages() {
@@ -279,7 +279,7 @@
             });
 
             document.getElementById('messageStatus').innerHTML = 
-                '<div class="success">✅ Test messages added! Check chat page for conversation history</div>';
+                '<div class="success"><i class="fa-solid fa-circle-check fa-app-icon"></i> Test messages added! Check chat page for conversation history</div>';
         }
 
         function createMultipleRequests() {
@@ -312,7 +312,7 @@
             localStorage.setItem('borrowRequests', JSON.stringify(allRequests));
 
             document.getElementById('multipleStatus').innerHTML = 
-                '<div class="success">✅ Additional request created! Now Rajesh Kumar has 3 approved items for same user</div>';
+                '<div class="success"><i class="fa-solid fa-circle-check fa-app-icon"></i> Additional request created! Now Rajesh Kumar has 3 approved items for same user</div>';
         }
 
         function openChatPage() {
@@ -369,7 +369,7 @@
             }
             
             document.getElementById('dataStatus').innerHTML = 
-                '<div class="success">✅ All test data cleared!</div>';
+                '<div class="success"><i class="fa-solid fa-circle-check fa-app-icon"></i> All test data cleared!</div>';
         }
 
         // Auto-show current data on load

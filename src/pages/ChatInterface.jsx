@@ -56,8 +56,8 @@ const ChatInterface = () => {
       const uniqueUsers = new Map();
       const currentUserId = auth.currentUser?.uid || 'demo-user';
 
-      console.log('Current user ID:', currentUserId);
-      console.log('🧹 Starting with completely empty chat list - will only add users with messages');
+  console.log('Current user ID:', currentUserId);
+  console.log('Starting with completely empty chat list - will only add users with messages');
       
       // Clear any cached chatUsers from localStorage to start fresh
       try {
@@ -94,9 +94,9 @@ const ChatInterface = () => {
         }
         keysToRemove.forEach(key => {
           localStorage.removeItem(key);
-          console.log('🗑️ ChatInterface: Removed placeholder chat:', key);
+          console.log('ChatInterface: Removed placeholder chat:', key);
         });
-        console.log('🗑️ Cleared cached chatUsers from localStorage');
+        console.log('Cleared cached chatUsers from localStorage');
       } catch (e) {
         console.log('Could not clear chatUsers from localStorage');
       }
@@ -145,7 +145,7 @@ const ChatInterface = () => {
             lastMessageAt: lastMsg.timestamp || lastMsg.createdAt || new Date().toISOString()
           };
 
-          console.log('✅ Added user with conversation history:', userName, 'Messages:', msgs.length);
+          console.log('Added user with conversation history:', userName, 'Messages:', msgs.length);
           uniqueUsers.set(otherId, existing);
         }
       } catch (err) {
@@ -169,14 +169,14 @@ const ChatInterface = () => {
 
               // STRICT: Only include users who have actual messages with real content
               if (!data.lastMessage || !data.lastMessage.trim() || data.lastMessage.length < 1) {
-                console.log('❌ Skipping user without real messages:', otherUserId);
+                console.log('Skipping user without real messages:', otherUserId);
                 return;
               }
 
               // STRICT: Must have a real name, not just email or ID
               const realName = data.otherUserName || data.withUserName;
               if (!realName || realName.trim() === '' || realName === otherUserId) {
-                console.log('❌ Skipping user without real name:', otherUserId, realName);
+                console.log('Skipping user without real name:', otherUserId, realName);
                 return;
               }
 
@@ -193,7 +193,7 @@ const ChatInterface = () => {
                 chatId: data.chatId || docSnap.id
               };
 
-              console.log('✅ Added Firestore user with messages:', realName);
+              console.log('Added Firestore user with messages:', realName);
               uniqueUsers.set(otherUserId, existing);
             });
 
@@ -255,7 +255,7 @@ const ChatInterface = () => {
           const isValid = hasValidName && hasMessages && hasRealName;
           
           if (!isValid) {
-            console.log('❌ ChatInterface: Blocked placeholder user:', {
+            console.log('ChatInterface: Blocked placeholder user:', {
               id: user.id,
               name: user.name,
               displayName,
@@ -271,8 +271,8 @@ const ChatInterface = () => {
           return tb - ta;
         });
 
-      console.log('🎯 Final chat users (STRICT filtering):', users);
-      console.log('📊 Total users after filtering:', users.length);
+  console.log('Final chat users (STRICT filtering):', users);
+  console.log('Total users after filtering:', users.length);
       setChatUsers(users);
 
       if (users.length > 0 && !selectedUser) {
@@ -440,9 +440,9 @@ const ChatInterface = () => {
                             <h3 className="font-medium text-gray-900">{getDisplayName(user) || 'User'}</h3>
                             <span className="text-xs text-gray-500">{formatRelativeTime(user.lastMessageAt || user.lastMessageTime)}</span>
                           </div>
-                          <p className="text-sm text-gray-600">📦 {user.itemName || (user.items && user.items[0]) || 'Chat Item'}</p>
+                          <p className="text-sm text-gray-600"><i className="fa-solid fa-box fa-app-icon" aria-hidden="true"></i> {user.itemName || (user.items && user.items[0]) || 'Chat Item'}</p>
                           {user.lastMessage ? (
-                            <p className="text-xs text-gray-500 truncate">💬 {getSnippet(user.lastMessage, 80)}</p>
+                            <p className="text-xs text-gray-500 truncate"><i className="fa-solid fa-comments fa-app-icon" aria-hidden="true"></i> {getSnippet(user.lastMessage, 80)}</p>
                           ) : (
                             <p className="text-xs text-gray-400">{user.email}</p>
                           )}

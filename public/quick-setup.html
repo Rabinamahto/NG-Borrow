@@ -183,12 +183,12 @@
 
             document.getElementById('status').innerHTML = 
                 '<div style="background: #d4edda; padding: 15px; border-radius: 8px; color: #155724; margin: 10px 0;">' +
-                '✅ Comprehensive test data created!<br>' +
-                '📱 2 Borrow Requests:<br>' +
+                '<i class="fa-solid fa-circle-check fa-app-icon"></i> Comprehensive test data created!<br>' +
+                '<i class="fa-solid fa-mobile-screen-button fa-app-icon"></i> 2 Borrow Requests:<br>' +
                 '&nbsp;&nbsp;• Flower Poster from Kajal Kumar (you borrowed)<br>' +
                 '&nbsp;&nbsp;• Study Lamp to Another User (you lent)<br>' +
-                '💬 2 Chat conversations with messages<br>' +
-                '� 2 Chat Users ready to display<br>' +
+                '<i class="fa-solid fa-comments fa-app-icon"></i> 2 Chat conversations with messages<br>' +
+                '<i class="fa-solid fa-users fa-app-icon"></i> 2 Chat Users ready to display<br>' +
                 '<strong>Now click "Open Chat Page" to see both chats!</strong>' +
                 '</div>';
         }
@@ -211,7 +211,7 @@
             
             document.getElementById('status').innerHTML = 
                 '<div style="background: #f8d7da; padding: 15px; border-radius: 8px; color: #721c24; margin: 10px 0;">' +
-                '🗑️ All data cleared!' +
+                '<i class="fa-solid fa-trash fa-app-icon"></i> All data cleared!' +
                 '</div>';
         }
 
@@ -229,9 +229,9 @@
             }
 
             let status = '<h3>Current Data Status:</h3>';
-            status += '<p>📋 Borrow Requests: ' + (borrowRequests ? 'Present' : 'None') + '</p>';
-            status += '<p>👥 Chat Users: ' + (chatUsers ? 'Present' : 'None') + '</p>';
-            status += '<p>💬 Chat Conversations: ' + chatMessages + '</p>';
+            status += '<p><i class="fa-solid fa-clipboard fa-app-icon"></i> Borrow Requests: ' + (borrowRequests ? 'Present' : 'None') + '</p>';
+            status += '<p><i class="fa-solid fa-users fa-app-icon"></i> Chat Users: ' + (chatUsers ? 'Present' : 'None') + '</p>';
+            status += '<p><i class="fa-solid fa-comments fa-app-icon"></i> Chat Conversations: ' + chatMessages + '</p>';
             
             document.getElementById('status').innerHTML = status;
         }

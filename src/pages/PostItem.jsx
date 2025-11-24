@@ -32,6 +32,8 @@ const PostItem = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const today = new Date().toISOString().split('T')[0];
+
   const handleFiles = (e) => {
     // अधिकतम 5 इमेज की सीमा लागू करें
     const selectedFiles = Array.from(e.target.files || []).slice(0, 5); 
@@ -55,6 +57,8 @@ const PostItem = () => {
     if (!title.trim()) return setError("Title required");
     // Image validation (as shown in your UI)
     if (images.length === 0) return setError("Please upload at least one image.");
+    // Reserved Until is required
+    if (!reservedUntil) return setError("Please select a Reserved Until date.");
 
     setSaving(true);
     try {
@@ -214,17 +218,32 @@ const PostItem = () => {
           {/* CATEGORY (Dropdown as requested earlier) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full border-b border-gray-300 p-3 rounded-t-lg appearance-none bg-white focus:border-indigo-500 focus:ring-0"
-            >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full border-b border-gray-300 p-3 pr-10 rounded-t-lg appearance-none bg-white focus:border-indigo-500 focus:ring-0"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+
+              <svg
+                className="pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </div>
           </div>
 
           {/* DESCRIPTION */}
@@ -243,27 +262,44 @@ const PostItem = () => {
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
-              <select
-                value={condition}
-                onChange={(e) => setCondition(e.target.value)}
-                className="w-full border-b border-gray-300 p-3 rounded-t-lg appearance-none bg-white focus:border-indigo-500 focus:ring-0"
-              >
-                {conditions.map((cond) => (
-                  <option key={cond} value={cond}>
-                    {cond}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={condition}
+                  onChange={(e) => setCondition(e.target.value)}
+                  className="w-full border-b border-gray-300 p-3 pr-10 rounded-t-lg appearance-none bg-white focus:border-indigo-500 focus:ring-0"
+                >
+                  {conditions.map((cond) => (
+                    <option key={cond} value={cond}>
+                      {cond}
+                    </option>
+                  ))}
+                </select>
+
+                <svg
+                  className="pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </div>
             </div>
             
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reserved Until (Optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Reserved Until</label>
               <input
                 type="date"
                 value={reservedUntil}
                 onChange={(e) => setReservedUntil(e.target.value)}
+                min={today}
                 className="w-full border-b border-gray-300 p-3 rounded-t-lg focus:border-indigo-500 focus:ring-0"
                 placeholder="mm/dd/yyyy"
+                required
               />
             </div>
           </div>

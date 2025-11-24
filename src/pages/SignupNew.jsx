@@ -23,7 +23,7 @@ const Signup = () => {
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    console.log("📝 Attempting signup with:", formData.email);
+  console.log("Attempting signup with:", formData.email);
     
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords don't match!");
@@ -39,18 +39,18 @@ const Signup = () => {
     
     try {
       const result = await signup(formData.email, formData.password, formData.displayName);
-      console.log("📝 Signup result:", result);
+  console.log("Signup result:", result);
       
       if (result.success) {
-        console.log("✅ Signup successful!");
+  console.log("Signup successful!");
         alert("Account created successfully!");
         navigate("/"); // Redirect to home
       } else {
-        console.error("❌ Signup failed:", result.error);
+  console.error("Signup failed:", result.error);
         alert(`Signup failed: ${result.error}`);
       }
-    } catch (error) {
-      console.error("❌ Signup error:", error);
+  } catch (error) {
+  console.error("Signup error:", error);
       alert(`Signup error: ${error.message}`);
     } finally {
       setLoading(false);

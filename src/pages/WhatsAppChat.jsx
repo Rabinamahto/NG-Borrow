@@ -81,13 +81,13 @@ const WhatsAppChat = () => {
 
   // Load approved users for chat
   useEffect(() => {
-    console.log('🔄 Component mounted, loading chat users...');
+    console.log('Component mounted, loading chat users...');
     loadChatUsers();
   }, [currentUser]);
 
   // Force load on component mount
   useEffect(() => {
-    console.log('🚀 Force loading chat users on mount...');
+    console.log('Force loading chat users on mount...');
     setTimeout(() => {
       loadChatUsers();
     }, 100);
@@ -181,9 +181,9 @@ const WhatsAppChat = () => {
             
             if (hasLastMessage && hasValidName) {
               map.set(c.id, c);
-              console.log('✅ Firestore: Added user with valid name and messages:', otherUser.name);
+              console.log('Firestore: Added user with valid name and messages:', otherUser.name);
             } else {
-              console.log('❌ Firestore: Blocked user:', {
+              console.log('Firestore: Blocked user:', {
                 name: otherUser.name,
                 hasLastMessage,
                 hasValidName,
@@ -245,9 +245,9 @@ const WhatsAppChat = () => {
           avatar: userName.charAt(0).toUpperCase()
         };
         
-        // DO NOT automatically add URL parameter users to chat list
-        // They will only appear after sending actual messages
-        console.log('🚫 URL user created but NOT added to chat list:', userName);
+  // DO NOT automatically add URL parameter users to chat list
+  // They will only appear after sending actual messages
+  console.log('URL user created but NOT added to chat list:', userName);
       }
       
       handleUserSelect(targetUser);
@@ -309,7 +309,7 @@ const WhatsAppChat = () => {
   // Utility function to completely clear placeholder users including "User"
   const clearAllPlaceholderUsers = () => {
     try {
-      console.log('🗑️ Starting aggressive placeholder user cleanup...');
+      console.log('Starting aggressive placeholder user cleanup...');
       
       // Clear state immediately
       setChatUsers([]);
@@ -344,15 +344,15 @@ const WhatsAppChat = () => {
         }
       }
       
-      keysToRemove.forEach(key => {
+        keysToRemove.forEach(key => {
         localStorage.removeItem(key);
-        console.log('🗑️ Removed placeholder conversation:', key);
+        console.log('Removed placeholder conversation:', key);
       });
       
       // Reload chat users to reflect changes
       setTimeout(() => {
         loadChatUsers();
-        console.log('✅ Placeholder cleanup complete, reloaded chat users');
+        console.log('Placeholder cleanup complete, reloaded chat users');
       }, 100);
       
     } catch (e) {
@@ -362,8 +362,8 @@ const WhatsAppChat = () => {
 
   const loadChatUsers = () => {
     try {
-      console.log('🔄 Starting loadChatUsers function...');
-      console.log('🧹 CLEARING ALL CACHED CHAT USERS - Starting fresh');
+  console.log('Starting loadChatUsers function...');
+    console.log('CLEARING ALL CACHED CHAT USERS - Starting fresh');
       
       // Clear any existing state first
       setChatUsers([]);
@@ -400,28 +400,28 @@ const WhatsAppChat = () => {
             });
             if (hasPlaceholderUsers) {
               localStorage.removeItem(key);
-              console.log('🗑️ Removed placeholder chat:', key);
+              console.log('Removed placeholder chat:', key);
             }
           } catch (e) {
             localStorage.removeItem(key);
-            console.log('🗑️ Removed corrupted chat:', key);
+            console.log('Removed corrupted chat:', key);
           }
         });
-        console.log('🧹 Cleared all localStorage chat data');
+        console.log('Cleared all localStorage chat data');
       } catch (e) {
         console.log('Could not clear localStorage');
       }
       
       // Use actual current user if logged in, otherwise fallback to demo-user
       const currentUserId = currentUser?.uid || currentUser?.email || 'demo-user';
-      console.log('👤 Current user ID:', currentUserId);
-      console.log('👤 Current user object:', currentUser);
+  console.log('Current user ID:', currentUserId);
+  console.log('Current user object:', currentUser);
       
       // Load from localStorage borrowRequests (our main data source)
       const borrowRequestsJSON = localStorage.getItem('borrowRequests');
       const borrowRequests = borrowRequestsJSON ? JSON.parse(borrowRequestsJSON) : [];
-      console.log('📋 Raw borrow requests JSON:', borrowRequestsJSON);
-      console.log('📋 Parsed borrow requests:', borrowRequests);
+  console.log('Raw borrow requests JSON:', borrowRequestsJSON);
+  console.log('Parsed borrow requests:', borrowRequests);
       
       // Load existing chat users from localStorage to maintain history
       const existingChatsJSON = localStorage.getItem('chatUsers');
@@ -437,7 +437,7 @@ const WhatsAppChat = () => {
         try { localStorage.setItem('chatUsers', JSON.stringify(cleanedExisting)); } catch (e) {}
         existingChats = cleanedExisting;
       }
-      console.log('💬 Existing chat users:', existingChats);
+  console.log('Existing chat users:', existingChats);
       
       // Also check for any chat conversations that exist in localStorage
       const allChatConversations = [];
@@ -451,19 +451,19 @@ const WhatsAppChat = () => {
         }
       }
       
-      console.log('💬 Found chat conversations:', allChatConversations);
+  console.log('Found chat conversations:', allChatConversations);
       
       const approvedRequests = borrowRequests.filter(request => 
         request.status === 'approved'
       );
-      console.log('✅ Approved requests found:', approvedRequests.length, approvedRequests);
+  console.log('Approved requests found:', approvedRequests.length, approvedRequests);
 
       const uniqueUsers = new Map();
 
       // First add existing chat users to maintain history
-      console.log('📤 Adding existing chat users:', existingChats.length);
+      console.log('Adding existing chat users:', existingChats.length);
       existingChats.forEach(user => {
-        console.log('➕ Adding existing user:', user.name);
+        console.log('Adding existing user:', user.name);
         uniqueUsers.set(user.id, {
           ...user,
           lastMessage: '', // Will be updated from actual messages
@@ -508,9 +508,9 @@ const WhatsAppChat = () => {
       });
 
       // Then add users from approved requests
-      console.log('📝 Processing approved requests for user:', currentUserId);
+      console.log('Processing approved requests for user:', currentUserId);
       approvedRequests.forEach((request, index) => {
-        console.log(`🔍 Processing request ${index + 1}:`, {
+        console.log(`Processing request ${index + 1}:`, {
           borrowerId: request.borrowerId,
           itemOwnerId: request.itemOwnerId,
           itemTitle: request.itemTitle,
@@ -519,15 +519,15 @@ const WhatsAppChat = () => {
 
         // For borrower: add item owner to chat list
         if (request.borrowerId === currentUserId && request.itemOwnerId) {
-          console.log('👤 Current user is borrower, adding owner:', request.itemOwnerName);
+          console.log('Current user is borrower, adding owner:', request.itemOwnerName);
           // Only add the owner to the visible list if there is an existing
           // conversation in localStorage (i.e., messages exchanged), otherwise
           // keep them hidden until a message/chat occurs.
           const ownerId = request.itemOwnerId;
           const hasConversation = allChatConversations.some(c => c.chatKey.includes(ownerId));
           if (hasConversation) {
-            if (!uniqueUsers.has(ownerId)) {
-              console.log('➕ Creating new owner user (has conversation):', request.itemOwnerName);
+              if (!uniqueUsers.has(ownerId)) {
+              console.log('Creating new owner user (has conversation):', request.itemOwnerName);
               uniqueUsers.set(ownerId, {
                 id: ownerId,
                 name: request.itemOwnerName || 'Item Owner',
@@ -544,8 +544,8 @@ const WhatsAppChat = () => {
                 lastMessage: '',
                 lastMessageTime: null
               });
-            } else {
-              console.log('📝 Adding item to existing owner user:', request.itemTitle);
+              } else {
+              console.log('Adding item to existing owner user:', request.itemTitle);
               // Add item to existing user's items list
               const existingUser = uniqueUsers.get(ownerId);
               if (!existingUser.items) existingUser.items = [];
@@ -560,13 +560,13 @@ const WhatsAppChat = () => {
         
         // For owner: add borrower to chat list
         if (request.itemOwnerId === currentUserId && request.borrowerId) {
-          console.log('👤 Current user is owner, adding borrower:', request.borrowerName);
+          console.log('Current user is owner, adding borrower:', request.borrowerName);
           // Only add the borrower if there is an existing conversation
           const borrowerId = request.borrowerId;
           const hasConversation = allChatConversations.some(c => c.chatKey.includes(borrowerId));
           if (hasConversation) {
             if (!uniqueUsers.has(borrowerId)) {
-              console.log('➕ Creating new borrower user (has conversation):', request.borrowerName);
+              console.log('Creating new borrower user (has conversation):', request.borrowerName);
               uniqueUsers.set(borrowerId, {
                 id: borrowerId,
                 name: request.borrowerName || 'Borrower',
@@ -584,7 +584,7 @@ const WhatsAppChat = () => {
                 lastMessageTime: null
               });
             } else {
-              console.log('📝 Adding item to existing borrower user:', request.itemTitle);
+              console.log('Adding item to existing borrower user:', request.itemTitle);
               const existingUser = uniqueUsers.get(borrowerId);
               if (!existingUser.items) existingUser.items = [];
               if (!existingUser.items.includes(request.itemTitle)) {
@@ -630,7 +630,7 @@ const WhatsAppChat = () => {
         const hasValidData = hasRealName && hasMessages;
         
         if (!hasValidData) {
-          console.log('❌ WhatsApp: Blocked placeholder user:', {
+          console.log('WhatsApp: Blocked placeholder user:', {
             id: u.id,
             name: u.name,
             reason: !hasRealName ? 'Invalid name' : 'No messages'
@@ -650,8 +650,8 @@ const WhatsAppChat = () => {
         return (a.name || '').toString().localeCompare((b.name || '').toString());
       });
 
-      console.log('✅ Final chat users (filtered & sorted):', users);
-      console.log('📊 Users count:', users.length);
+  console.log('Final chat users (filtered & sorted):', users);
+  console.log('Users count:', users.length);
 
       // Save to localStorage only for anonymous/offline mode. When a user is
       // authenticated we rely on Firestore (onSnapshot) as the source of truth.
@@ -684,18 +684,18 @@ const WhatsAppChat = () => {
       }
       setLoading(false);
       
-      console.log('✅ Chat users state updated, loading set to false');
+  console.log('Chat users state updated, loading set to false');
       
       // Auto-select first user if no URL params and no current selection
       if (users.length > 0 && !selectedUser && !searchParams.get('user')) {
-        console.log('🎯 Auto-selecting first user:', users[0].name);
+  console.log('Auto-selecting first user:', users[0].name);
         // On desktop, auto-select first user. On mobile, let user choose
         if (!isMobile) {
           setSelectedUser(users[0]);
         }
       }
     } catch (error) {
-      console.error('❌ Error loading chat users:', error);
+      console.error('Error loading chat users:', error);
       setLoading(false);
     }
   };
@@ -802,7 +802,7 @@ const WhatsAppChat = () => {
         !/^user\d*$/i.test(userName);
       
       if (!hasValidName) {
-        console.log('🚫 sendMessage: Not creating chat metadata for invalid user name:', userName);
+        console.log('sendMessage: Not creating chat metadata for invalid user name:', userName);
         // Still save the message but don't create chat metadata that would appear in list
         setNewMessage('');
         setSending(false);
@@ -1075,7 +1075,7 @@ const WhatsAppChat = () => {
           !/^user\d*$/i.test(userName);
         
         if (!hasValidName) {
-          console.log('🚫 handleUserSelect: Not creating presence doc for invalid user name:', userName);
+          console.log('handleUserSelect: Not creating presence doc for invalid user name:', userName);
           return; // Don't create Firestore presence for invalid users
         }
         
@@ -1096,9 +1096,9 @@ const WhatsAppChat = () => {
           // ignore firestore runtime problems
         }
 
-        // DO NOT automatically add users to chat list on selection
-        // Users will only appear after actual messages are sent
-        console.log('🚫 User selected but NOT added to chat list automatically:', user.name || user.id);
+  // DO NOT automatically add users to chat list on selection
+  // Users will only appear after actual messages are sent
+  console.log('User selected but NOT added to chat list automatically:', user.name || user.id);
       }
     } catch (err) { console.error('handleUserSelect error', err); }
   };
@@ -1113,9 +1113,9 @@ const WhatsAppChat = () => {
 
   // Test function to create dummy data
   const createTestData = () => {
-    console.log('🧪 Creating test data...');
+    console.log('Creating test data...');
     const actualCurrentUserId = currentUser?.uid || currentUser?.email || 'demo-user';
-    console.log('📝 Using current user ID for test data:', actualCurrentUserId);
+    console.log('Using current user ID for test data:', actualCurrentUserId);
     
     const testRequests = [
       {
@@ -1312,7 +1312,7 @@ const WhatsAppChat = () => {
                       searchInputRef.current?.blur();
                     } else {
                       // DO NOT create temporary users from search
-                      console.log('🚫 Search term not found, but NOT creating temporary user:', q);
+                      console.log('Search term not found, not creating temporary user:', q);
                       setSearchTerm('');
                       searchInputRef.current?.blur();
                     }
@@ -1370,13 +1370,13 @@ const WhatsAppChat = () => {
                 className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-800 text-xs rounded"
                 title="Clear placeholder users like 'user', 'another user'"
               >
-                🗑️
+                <i className="fa-solid fa-trash fa-app-icon" aria-hidden="true"></i>
               </button>
               <button 
                 onClick={loadChatUsers}
                 className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
               >
-                🔄
+                <i className="fa-solid fa-arrows-rotate fa-app-icon" aria-hidden="true"></i>
               </button>
             </div>
           </div>
@@ -1400,7 +1400,7 @@ const WhatsAppChat = () => {
                           <h3 className="font-semibold text-gray-900 truncate mr-2">{getDisplayName(selectedUser) || 'User'}</h3>
                           <span className="text-xs text-gray-500">{formatRelativeTime(selectedUser?.lastMessageAt || selectedUser?.lastMessageTime)}</span>
                         </div>
-                        <p className="text-sm text-gray-600 truncate">📦 {selectedUser.itemName || 'Chat Item'}</p>
+                        <p className="text-sm text-gray-600 truncate"><i className="fa-solid fa-box fa-app-icon" aria-hidden="true"></i> {selectedUser.itemName || 'Chat Item'}</p>
                       </div>
                     </div>
                   </div>
@@ -1497,21 +1497,21 @@ const WhatsAppChat = () => {
                     
                     {/* Items Display */}
                     <div className="mb-1">
-                      {user.items && user.items.length > 1 ? (
+                        {user.items && user.items.length > 1 ? (
                         <p className="text-sm text-gray-600 truncate">
-                          📦 {user.items.length} items: {user.items.slice(0, 2).join(', ')}
+                          <i className="fa-solid fa-box fa-app-icon" aria-hidden="true"></i> {user.items.length} items: {user.items.slice(0, 2).join(', ')}
                           {user.items.length > 2 && ` +${user.items.length - 2} more`}
                         </p>
                       ) : (
                         <p className="text-sm text-gray-600 truncate">
-                          📦 {user.itemName || user.items?.[0] || 'Chat Item'}
+                          <i className="fa-solid fa-box fa-app-icon" aria-hidden="true"></i> {user.itemName || user.items?.[0] || 'Chat Item'}
                         </p>
                       )}
                     </div>
                     
                     {/* Last Message */}
-                    {user.lastMessage ? (
-                      <p className="text-xs text-gray-500 truncate">💬 {getSnippet(user.lastMessage, 80)}</p>
+                      {user.lastMessage ? (
+                      <p className="text-xs text-gray-500 truncate"><i className="fa-solid fa-comment fa-app-icon" aria-hidden="true"></i> {getSnippet(user.lastMessage, 80)}</p>
                     ) : (
                       <p className="text-xs text-green-600">
                         {user.itemCategory || 'Chat'} • Click to start conversation
@@ -1566,7 +1566,7 @@ const WhatsAppChat = () => {
                   />
                 )}
                 <div>
-                  <h4 className="font-medium text-gray-900">📦 {selectedUser.itemName}</h4>
+                  <h4 className="font-medium text-gray-900"><i className="fa-solid fa-box fa-app-icon" aria-hidden="true"></i> {selectedUser.itemName}</h4>
                   <p className="text-sm text-gray-600">{selectedUser.itemCategory} • Approved Request</p>
                 </div>
               </div>
@@ -1690,34 +1690,41 @@ const WhatsAppChat = () => {
                   {showEmojiPicker && (
                     <div ref={emojiPickerRef} className="absolute bottom-12 left-0 bg-white border rounded-md shadow-lg p-2 w-48 z-50">
                       <div className="grid grid-cols-6 gap-2 text-lg">
-                        {['😊','😂','😍','👍','🎉','🙏','🔥','😉','😅','😢','🤔','🙌'].map((e) => (
+                        {[
+                          { token: '(smile)', icon: 'fa-solid fa-smile', label: 'smile' },
+                          { token: '(laugh)', icon: 'fa-solid fa-grin', label: 'laugh' },
+                          { token: '(love)', icon: 'fa-solid fa-heart', label: 'love' },
+                          { token: '(thumbs_up)', icon: 'fa-solid fa-thumbs-up', label: 'thumbs up' },
+                          { token: '(star)', icon: 'fa-solid fa-star', label: 'star' },
+                          { token: '(fire)', icon: 'fa-solid fa-fire', label: 'fire' }
+                        ].map((opt) => (
                           <button
-                            key={e}
+                            key={opt.token}
                             onClick={() => {
-                              // insert emoji at cursor position in message input
+                              // insert placeholder token at cursor position in message input
                               setNewMessage(prev => {
                                 try {
                                   const input = messageInputRef.current;
                                   if (input && typeof input.selectionStart === 'number') {
                                     const start = input.selectionStart;
                                     const end = input.selectionEnd;
-                                    const next = prev.slice(0, start) + e + prev.slice(end);
+                                    const next = prev.slice(0, start) + opt.token + prev.slice(end);
                                     // restore cursor after render
                                     setTimeout(() => {
-                                      input.selectionStart = input.selectionEnd = start + e.length;
+                                      input.selectionStart = input.selectionEnd = start + opt.token.length;
                                       input.focus();
                                     }, 0);
                                     return next;
                                   }
                                 } catch (err) { /* ignore */ }
-                                return prev + e;
+                                return prev + opt.token;
                               });
                               setShowEmojiPicker(false);
                             }}
                             className="p-1 hover:bg-gray-100 rounded text-center"
-                            aria-label={`Insert ${e}`}
+                            aria-label={`Insert ${opt.label}`}
                           >
-                            {e}
+                            <i className={`${opt.icon} fa-app-icon`} aria-hidden="true"></i>
                           </button>
                         ))}
                       </div>
@@ -1735,13 +1742,13 @@ const WhatsAppChat = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                   />
                 </div>
-                <button
-                  onClick={sendMessage}
-                  disabled={!newMessage.trim()}
-                  className="w-10 h-10 bg-green-500 text-white rounded-full hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-                >
-                  <FiSend className="w-4 h-4" />
-                </button>
+                  <button
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim()}
+                    className="w-10 h-10 bg-green-500 text-white rounded-full hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                  >
+                    <FiSend className="w-4 h-4" />
+                  </button>
               </div>
             </div>
           </>
@@ -1789,7 +1796,7 @@ const WhatsAppChat = () => {
               onClick={copyMessage}
               className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center space-x-3 transition-colors"
             >
-              <span className="text-lg">📋</span>
+              <i className="fa-solid fa-clipboard fa-app-icon" aria-hidden="true"></i>
               <span className="font-medium text-gray-700">Copy</span>
             </button>
             
@@ -1799,7 +1806,7 @@ const WhatsAppChat = () => {
                   onClick={startEditing}
                   className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center space-x-3 transition-colors"
                 >
-                  <span className="text-lg">✏️</span>
+                  <i className="fa-solid fa-pen fa-app-icon" aria-hidden="true"></i>
                   <span className="font-medium text-gray-700">Edit</span>
                 </button>
                 <div className="border-t border-gray-100 my-1"></div>
@@ -1807,7 +1814,7 @@ const WhatsAppChat = () => {
                   onClick={deleteForEveryone}
                   className="w-full px-4 py-3 text-left text-sm hover:bg-red-50 flex items-center space-x-3 transition-colors text-red-600"
                 >
-                  <span className="text-lg">🗑️</span>
+                  <i className="fa-solid fa-trash fa-app-icon" aria-hidden="true"></i>
                   <span className="font-medium">Delete for Everyone</span>
                 </button>
               </>
@@ -1817,7 +1824,7 @@ const WhatsAppChat = () => {
               onClick={deleteForMe}
               className="w-full px-4 py-3 text-left text-sm hover:bg-red-50 flex items-center space-x-3 transition-colors text-red-600"
             >
-              <span className="text-lg">�</span>
+              <i className="fa-solid fa-trash fa-app-icon" aria-hidden="true"></i>
               <span className="font-medium">Delete for Me</span>
             </button>
           </div>

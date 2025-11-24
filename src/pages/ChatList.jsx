@@ -174,11 +174,11 @@ const ChatList = () => {
                       {/* Items */}
                       {chat.items && chat.items.length > 1 ? (
                         <p className="text-sm text-blue-600 font-medium mb-1">
-                          📦 {chat.items.length} items: {chat.items.map(item => item.title).slice(0, 2).join(', ')}{chat.items.length > 2 ? '...' : ''}
+                          <i className="fa-solid fa-box fa-app-icon"></i> {chat.items.length} items: {chat.items.map(item => item.title).slice(0, 2).join(', ')}{chat.items.length > 2 ? '...' : ''}
                         </p>
                       ) : chat.items && chat.items.length === 1 ? (
                         <p className="text-sm text-gray-600 mb-1 truncate">
-                          📦 {chat.items[0].title}
+                          <i className="fa-solid fa-box fa-app-icon"></i> {chat.items[0].title}
                         </p>
                       ) : null}
                       
@@ -212,9 +212,9 @@ const ChatList = () => {
 
         {/* Instructions */}
         {chats.length > 0 && (
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-700">
-              💡 <strong>Tip:</strong> These chats are available because you've either approved someone's borrow request or had your request approved.
+              <i className="fa-solid fa-lightbulb fa-app-icon"></i> <strong>Tip:</strong> These chats are available because you've either approved someone's borrow request or had your request approved.
             </p>
           </div>
         )}

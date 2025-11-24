@@ -57,7 +57,7 @@ const AppContainer = () => {
 
       <div className="max-w-7xl mx-auto p-4 sm:p-8">
         {currentPage === 'browse' ? (
-          <BrowseItems initialItems={items} />
+          <BrowseItems initialItems={items} showSearch={false} />
         ) : (
           <PostItem onPost={handleAddItem} />
         )}

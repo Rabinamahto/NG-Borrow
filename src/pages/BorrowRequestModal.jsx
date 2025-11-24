@@ -19,13 +19,15 @@ const BorrowRequestModal = ({ item, onClose, onSubmit }) => {
   const availableUntilDate = item.reservedUntil || "2025-12-15"; 
 
   const [reason, setReason] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [aadhaar, setAadhaar] = useState("");
+    const [mobile, setMobile] = useState("");
+    const [roomFloor, setRoomFloor] = useState("");
   const [borrowDate, setBorrowDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+    const today = new Date().toISOString().split('T')[0];
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -48,7 +50,7 @@ const BorrowRequestModal = ({ item, onClose, onSubmit }) => {
             borrowerEmail: myUser.email || null,
             reason,
             mobile,
-            aadhaar,
+            roomFloor,
             borrowDate,
             returnDate,
             timestamp: new Date().toISOString(),
@@ -148,16 +150,13 @@ const BorrowRequestModal = ({ item, onClose, onSubmit }) => {
                     />
                 </div>
                 <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700">Aadhaar Number:</label>
+                    <label className="block text-sm font-medium text-gray-700">Room & Floor:</label>
                     <input
                         type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={aadhaar}
-                        onChange={(e) => setAadhaar(e.target.value.replace(/\D/g, '').slice(0, 12))}
+                        value={roomFloor}
+                        onChange={(e) => setRoomFloor(e.target.value)}
                         className="w-full border-b border-gray-300 p-2 focus:border-indigo-500"
-                        placeholder="12-digit Aadhaar"
-                        maxLength={12}
+                        placeholder="e.g. Room 203, 2nd Floor"
                     />
                 </div>
             </div>
@@ -171,6 +170,7 @@ const BorrowRequestModal = ({ item, onClose, onSubmit }) => {
                             type="date"
                             value={borrowDate}
                             onChange={(e) => setBorrowDate(e.target.value)}
+                            min={today}
                             className="w-full border-b border-gray-300 p-2 pr-8 focus:border-indigo-500"
                             placeholder="MM/DD/YYYY"
                         />
@@ -183,6 +183,7 @@ const BorrowRequestModal = ({ item, onClose, onSubmit }) => {
                             type="date"
                             value={returnDate}
                             onChange={(e) => setReturnDate(e.target.value)}
+                            min={borrowDate || today}
                             className="w-full border-b border-gray-300 p-2 pr-8 focus:border-indigo-500"
                             placeholder="MM/DD/YYYY"
                         />

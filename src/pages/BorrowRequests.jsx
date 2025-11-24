@@ -18,7 +18,7 @@ const BorrowRequests = () => {
       try {
         // Load from localStorage borrowRequests
         const allBorrowRequests = JSON.parse(localStorage.getItem('borrowRequests') || '[]');
-        console.log('📱 All borrow requests from localStorage:', allBorrowRequests);
+  console.log('All borrow requests from localStorage:', allBorrowRequests);
         
         // Filter incoming requests (requests for items I own)
         const incoming = allBorrowRequests.filter(request => 
@@ -30,14 +30,14 @@ const BorrowRequests = () => {
           request.borrowerId === currentUser
         );
         
-        console.log('📥 Incoming requests (items I own):', incoming);
-        console.log('📤 Outgoing requests (items I requested):', outgoing);
+  console.log('Incoming requests (items I own):', incoming);
+  console.log('Outgoing requests (items I requested):', outgoing);
         
         setIncomingRequests(incoming);
         setOutgoingRequests(outgoing);
         
       } catch (error) {
-        console.error('❌ Error loading requests from localStorage:', error);
+  console.error('Error loading requests from localStorage:', error);
       }
       
       setLoading(false);
@@ -61,7 +61,7 @@ const BorrowRequests = () => {
           setIncomingRequests(requests);
           setLoading(false);
         }, (error) => {
-          console.warn('⚠️ Firebase incoming requests error, using localStorage:', error);
+          console.warn('Firebase incoming requests error, using localStorage:', error);
           loadRequests();
         });
 
@@ -78,7 +78,7 @@ const BorrowRequests = () => {
           });
           setOutgoingRequests(requests);
         }, (error) => {
-          console.warn('⚠️ Firebase outgoing requests error, using localStorage:', error);
+          console.warn('Firebase outgoing requests error, using localStorage:', error);
           loadRequests();
         });
 
@@ -87,11 +87,11 @@ const BorrowRequests = () => {
           unsubOutgoing();
         };
       } catch (error) {
-        console.warn('⚠️ Firebase initialization error, using localStorage:', error);
+  console.warn('Firebase initialization error, using localStorage:', error);
         loadRequests();
       }
     } else {
-      console.log('🔄 No Firebase user, loading from localStorage...');
+  console.log('No Firebase user, loading from localStorage...');
       loadRequests();
     }
   }, []);
@@ -120,9 +120,9 @@ const BorrowRequests = () => {
               reservedAt: serverTimestamp(),
               borrowRequestId: request.borrowRequestId
             });
-            console.log('✅ Item status updated to reserved');
+            console.log('Item status updated to reserved');
           } catch (error) {
-            console.warn('⚠️ Failed to update item status:', error);
+            console.warn('Failed to update item status:', error);
           }
         }
 
@@ -140,10 +140,10 @@ const BorrowRequests = () => {
               borrowRequestId: request.borrowRequestId
             };
             localStorage.setItem('browseItems', JSON.stringify(browseItems));
-            console.log('✅ Item status updated in localStorage');
+            console.log('Item status updated in localStorage');
           }
         } catch (error) {
-          console.warn('⚠️ Failed to update item in localStorage:', error);
+          console.warn('Failed to update item in localStorage:', error);
         }
 
         // Update borrow request status in localStorage
@@ -159,10 +159,10 @@ const BorrowRequests = () => {
               approvedBy: currentUser?.uid
             };
             localStorage.setItem('borrowRequests', JSON.stringify(borrowRequests));
-            console.log('✅ Borrow request status updated in localStorage');
+            console.log('Borrow request status updated in localStorage');
           }
         } catch (error) {
-          console.warn('⚠️ Failed to update borrow request in localStorage:', error);
+          console.warn('Failed to update borrow request in localStorage:', error);
         }
         
         // Update in user's incoming requests
@@ -215,7 +215,7 @@ const BorrowRequests = () => {
           try {
             // Save notification to borrower's notifications collection
             await addDoc(collection(db, 'users', borrowerId, 'notifications'), notificationData);
-            console.log('✅ Approval notification sent to borrower');
+            console.log('Approval notification sent to borrower');
             
             // Also save to localStorage for immediate local notifications
             const localNotification = {
@@ -302,7 +302,7 @@ const BorrowRequests = () => {
               createdAt: serverTimestamp()
             });
 
-            console.log('✅ Chat connection created');
+            console.log('Chat connection created');
           } catch (error) {
             console.error('Failed to create chat connection:', error);
           }
@@ -414,7 +414,7 @@ const BorrowRequests = () => {
           try {
             // Save notification to borrower's notifications collection
             await addDoc(collection(db, 'users', borrowerId, 'notifications'), notificationData);
-            console.log('✅ Rejection notification sent to borrower');
+            console.log('Rejection notification sent to borrower');
           } catch (error) {
             console.error('Failed to send rejection notification:', error);
           }
@@ -453,9 +453,9 @@ const BorrowRequests = () => {
               returnedAt: serverTimestamp(),
               borrowRequestId: null
             });
-            console.log('✅ Item status updated to available');
+            console.log('Item status updated to available');
           } catch (error) {
-            console.warn('⚠️ Failed to update item status:', error);
+            console.warn('Failed to update item status:', error);
           }
         }
         
@@ -507,7 +507,7 @@ const BorrowRequests = () => {
 
           try {
             await addDoc(collection(db, 'users', borrowerId, 'notifications'), notificationData);
-            console.log('✅ Return notification sent to borrower');
+            console.log('Return notification sent to borrower');
           } catch (error) {
             console.error('Failed to send return notification:', error);
           }

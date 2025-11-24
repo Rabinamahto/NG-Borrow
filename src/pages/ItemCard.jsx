@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaChevronLeft, FaChevronRight, FaUserAlt, FaTools, FaStar, FaTimes, FaEllipsisV, FaPencilAlt, FaTrashAlt } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaUserAlt, FaTools, FaTimes, FaEllipsisV, FaPencilAlt, FaTrashAlt } from "react-icons/fa";
 import { AiOutlineClockCircle } from "react-icons/ai"; 
 import { auth } from "../firebase"; 
 
@@ -10,59 +10,63 @@ import { auth } from "../firebase";
 const getStatusData = (item) => {
     const today = new Date();
     let status = "Available";
-    let topBg = "bg-blue-600";
+    // Use neutral top background (white) to avoid strong colored bars
+    let topBg = "bg-white";
     // Available items: green action button with 'Borrow Now'
     let buttonClass = "bg-green-600 hover:bg-green-700";
     let buttonText = "Borrow Now";
-    let textColor = "text-green-600";
+    // Default status text color (dark) since top area is light
+    let textColor = "text-gray-800";
 
     const reservedUntilDate = item.reservedUntil ? new Date(item.reservedUntil) : null;
     
     // Check if item is borrowed (only if status is explicitly "borrowed" and no return date)
     if (item.status === "borrowed" && !item.returnedAt) {
-        status = "Already Borrowed";
-        topBg = "bg-red-500";
-        buttonClass = "bg-gray-400 cursor-not-allowed";
-        buttonText = "Already Borrowed";
-        textColor = "text-red-600";
+    status = "Already Borrowed";
+    // keep top area neutral even for borrowed status
+    topBg = "bg-white";
+    buttonClass = "bg-gray-400 cursor-not-allowed";
+    buttonText = "Already Borrowed";
+    textColor = "text-red-600";
     }
     // Pending reservation (someone requested but owner hasn't approved yet)
     else if (item.status === 'pending') {
-        status = 'Pending';
-        topBg = 'bg-yellow-600';
-        buttonClass = 'bg-yellow-500 cursor-not-allowed';
-        buttonText = 'Pending Approval';
-        textColor = 'text-yellow-700';
+    status = 'Pending';
+    topBg = 'bg-white';
+    buttonClass = 'bg-yellow-500 cursor-not-allowed';
+    buttonText = 'Pending Approval';
+    textColor = 'text-yellow-700';
     }
     // Reserved after owner approved
     else if (item.status === 'reserved') {
-        status = 'Already Borrowed';
-        topBg = 'bg-purple-600';
-        buttonClass = 'bg-gray-400 cursor-not-allowed';
-        buttonText = 'Already Borrowed';
-        textColor = 'text-gray-600';
+    status = 'Already Borrowed';
+    topBg = 'bg-white';
+    buttonClass = 'bg-gray-400 cursor-not-allowed';
+    buttonText = 'Already Borrowed';
+    textColor = 'text-gray-600';
     }
     // Check if item is available (either no status or status is "available" or has been returned)
     else if (!item.status || item.status === "available" || item.returnedAt) {
-        status = "Available";
-        topBg = "bg-green-600";
-        buttonClass = "bg-green-600 hover:bg-green-700";
-        buttonText = "Borrow Now";
-        textColor = "text-green-600";
+    status = "Available";
+    topBg = "bg-white";
+    buttonClass = "bg-green-600 hover:bg-green-700";
+    buttonText = "Borrow Now";
+    textColor = "text-green-600";
     }
     else if (reservedUntilDate && reservedUntilDate > today) {
-        status = "Reserved";
-        topBg = "bg-purple-600";
-        buttonClass = "bg-yellow-500 hover:bg-yellow-600";
-        buttonText = "Request to Borrow"; 
-        textColor = "text-yellow-600";
+    status = "Reserved";
+    topBg = "bg-white";
+    buttonClass = "bg-yellow-500 hover:bg-yellow-600";
+    buttonText = "Request to Borrow"; 
+    textColor = "text-yellow-600";
     }
     else if (item.status === "unavailable") {
-        status = "Unavailable";
-        topBg = "bg-gray-400";
-        buttonClass = "bg-gray-400 cursor-not-allowed";
-        buttonText = "Unavailable";
-        textColor = "text-red-600";
+    status = "Unavailable";
+    // slightly gray for unavailable to hint disabled state
+    topBg = "bg-gray-50";
+    buttonClass = "bg-gray-400 cursor-not-allowed";
+    buttonText = "Unavailable";
+    textColor = "text-red-600";
     }
     
     return { 
@@ -88,7 +92,6 @@ const ItemCard = ({ item, onBorrowClick, onDeleteItem, onReturnItem }) => {
   
     const { status, topBg, buttonClass, buttonText, textColor, isReserved, isUnavailable, isBorrowed } = getStatusData(item);
   
-  const rating = item.rating || 4.8; 
   const condition = item.condition || "Good";
   const ownerName = item.owner?.name || "Jane Doe"; 
   
@@ -163,17 +166,17 @@ const ItemCard = ({ item, onBorrowClick, onDeleteItem, onReturnItem }) => {
         <div id={`item-${item.id}`} className="w-full bg-white rounded-lg shadow-xl overflow-hidden transform hover:scale-[1.01] transition-transform duration-200">
       
       {/* 1. Image Slider Section (Colored Top) */}
-      <div className={`relative h-48 ${topBg} text-white p-4`}> 
+    <div className={`relative h-64 ${topBg} text-gray-800 p-4`}> 
         
-        {totalImages > 0 && item.images[currentImageIndex] ? (
-          <div className="absolute inset-0 z-0">
-             <img 
-                src={item.images[currentImageIndex]} 
-                alt={item.title} 
-                className="w-full h-full object-cover" 
-            />
-            <div className="absolute inset-0 bg-black opacity-20"></div>
-          </div>
+                {totalImages > 0 && item.images[currentImageIndex] ? (
+                    <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden p-3">
+                         <img 
+                                src={item.images[currentImageIndex]} 
+                                alt={item.title} 
+                                className="max-w-full max-h-full object-contain object-center rounded-sm" 
+                        />
+                        {/* removed dark overlay so images are shown clearly on neutral top background */}
+                    </div>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-xl font-bold p-4 opacity-50">
             No Image
@@ -255,8 +258,8 @@ const ItemCard = ({ item, onBorrowClick, onDeleteItem, onReturnItem }) => {
             <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>
         </div>
 
-        {/* Status, Rating, Owner, Condition (as before) */}
-        <div className="flex justify-between items-center text-sm"> {/* Status & Rating */}
+        {/* Status, Owner, Condition */}
+        <div className="flex justify-between items-center text-sm">
             <div className={`flex items-center space-x-1 font-semibold ${textColor}`}>
                 {isUnavailable ? (
                     <span className="flex items-center"><FaTimes className="w-4 h-4 text-red-500 mr-1" /> Unavailable</span>
@@ -265,11 +268,8 @@ const ItemCard = ({ item, onBorrowClick, onDeleteItem, onReturnItem }) => {
                 ) : isReserved ? (
                     <span className="flex items-center"><AiOutlineClockCircle className="w-4 h-4 mr-1 text-gray-500" /> Already Borrowed</span>
                 ) : (
-                    <span className="flex items-center"><span className="text-green-500 text-xl">✅</span> Available</span>
+                    <span className="flex items-center"><i className="fa-solid fa-circle-check text-green-500 fa-app-icon"></i> Available</span>
                 )}
-            </div>
-            <div className="flex items-center space-x-1 text-yellow-500 font-semibold">
-                <span>{rating}</span><FaStar className="w-3 h-3" />
             </div>
         </div>
 

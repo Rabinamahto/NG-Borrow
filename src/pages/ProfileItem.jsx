@@ -16,6 +16,8 @@ const PostItem = ({ onPost }) => {
   });
   const [previewImages, setPreviewImages] = useState([]); 
 
+  const today = new Date().toISOString().split('T')[0];
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setItem((prev) => ({ ...prev, [name]: value }));
@@ -172,6 +174,7 @@ const PostItem = ({ onPost }) => {
                 name="reservedUntil" 
                 value={item.reservedUntil} 
                 onChange={handleChange} 
+                min={today}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-sm lg:text-base" 
               />
             </div>
