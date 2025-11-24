@@ -63,7 +63,7 @@ const EditProfileModal = ({ user, setUser, closeModal }) => {
           onClick={closeModal}
           className="absolute right-4 top-3 text-gray-600 hover:text-red-500"
         >
-          ✖
+          <i className="fa-solid fa-xmark fa-app-icon" aria-hidden="true"></i>
         </button>
 
         <h2 className="text-xl font-bold mb-4 text-center">Edit Profile</h2>
@@ -87,9 +87,9 @@ const EditProfileModal = ({ user, setUser, closeModal }) => {
               )}
             </div>
 
-            {/* ✏ Edit Icon */}
+            {/* Edit Icon */}
             <div className="absolute bottom-0 right-0 bg-black/60 text-white p-2 rounded-full shadow-md group-hover:bg-black transition">
-              ✏️
+              <i className="fa-solid fa-pen fa-app-icon" aria-hidden="true"></i>
             </div>
 
             {/* Hidden File Input */}

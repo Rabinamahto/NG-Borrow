@@ -81,7 +81,7 @@
             'chat_demo-user_owner_001': [
                 {
                     id: 'msg_001',
-                    text: 'Hi! Thanks for approving my MacBook request 😊',
+                    text: 'Hi! Thanks for approving my MacBook request (smile)',
                     senderId: 'demo-user',
                     senderName: 'You',
                     timestamp: new Date(Date.now() - 3600000).toISOString(),
@@ -129,7 +129,7 @@
             localStorage.setItem(chatKey, JSON.stringify(chatMessages[chatKey]));
         });
 
-        console.log('✅ Test chat data created successfully!');
+    console.log('Test chat data created successfully!');
         alert('Test chat data created! Now you can test the WhatsApp-style chat.\n\nGo to: localhost:5177/chat');
         
         // Redirect to chat page

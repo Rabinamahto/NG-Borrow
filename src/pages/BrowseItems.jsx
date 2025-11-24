@@ -7,7 +7,7 @@ import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, delete
 import ItemCard from "./ItemCard"; 
 import BorrowRequestModal from "./BorrowRequestModal"; // Assuming this file exists
 
-const BrowseItems = ({ maxItems }) => {
+const BrowseItems = ({ maxItems, initialItems = null, showSearch = true }) => {
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null); 
   const [searchQuery, setSearchQuery] = useState('');
@@ -17,6 +17,12 @@ const BrowseItems = ({ maxItems }) => {
 
   const load = () => {
     try {
+      // If parent provided items (e.g. when BrowseItems is embedded on Home), prefer them
+      if (initialItems && Array.isArray(initialItems) && initialItems.length > 0) {
+        setItems(initialItems);
+        return;
+      }
+
       const raw = localStorage.getItem("browseItems");
       const parsedItems = raw ? JSON.parse(raw) : []; 
       
@@ -84,7 +90,7 @@ const BrowseItems = ({ maxItems }) => {
   };
   
   const handleModalSubmit = async (requestData) => {
-      console.log("🚀 Borrow Request Started:", requestData);
+    console.log("Borrow Request Started:", requestData);
 
       try {
         const itemTitle = selectedItem?.title || requestData.itemId || 'an item';
@@ -92,7 +98,7 @@ const BrowseItems = ({ maxItems }) => {
         const currentUser = auth?.currentUser;
         const ownerId = selectedItem?.ownerId || selectedItem?.owner?.id || null;
 
-        console.log("📋 Request Details:", {
+  console.log("Request Details:", {
           itemTitle,
           currentUser: currentUser?.email,
           ownerId,
@@ -122,7 +128,7 @@ const BrowseItems = ({ maxItems }) => {
           timestamp: serverTimestamp(),
         };
 
-        console.log("💾 Saving borrow request:", borrowRequest);
+  console.log("Saving borrow request:", borrowRequest);
 
         // Save to Firebase borrowRequests collection
         let borrowRequestId = null;
@@ -130,7 +136,7 @@ const BrowseItems = ({ maxItems }) => {
           try {
             const borrowRequestRef = await addDoc(collection(db, 'borrowRequests'), borrowRequest);
             borrowRequestId = borrowRequestRef.id;
-            console.log('✅ Borrow request saved to Firebase:', borrowRequestId);
+            console.log('Borrow request saved to Firebase:', borrowRequestId);
             
             // Also save to specific collections for easier querying
             if (ownerId) {
@@ -140,9 +146,9 @@ const BrowseItems = ({ maxItems }) => {
                   ...borrowRequest,
                   borrowRequestId: borrowRequestId,
                 });
-                console.log('✅ Saved to owner incoming requests');
+                console.log('Saved to owner incoming requests');
               } catch (error) {
-                console.warn('⚠️ Failed to save to owner incoming requests:', error);
+                console.warn('Failed to save to owner incoming requests:', error);
               }
             }
             
@@ -153,17 +159,17 @@ const BrowseItems = ({ maxItems }) => {
                   ...borrowRequest,
                   borrowRequestId: borrowRequestId,
                 });
-                console.log('✅ Saved to borrower outgoing requests');
+                console.log('Saved to borrower outgoing requests');
               } catch (error) {
-                console.warn('⚠️ Failed to save to borrower outgoing requests:', error);
+                console.warn('Failed to save to borrower outgoing requests:', error);
               }
             }
           } catch (error) {
-            console.error('❌ Failed to save borrow request to Firebase:', error);
+            console.error('Failed to save borrow request to Firebase:', error);
             // Continue with localStorage fallback
           }
         } else {
-          console.warn('⚠️ Firebase db not available');
+          console.warn('Firebase db not available');
         }
 
         // Build a notification object and save to localStorage notifications list
@@ -189,9 +195,9 @@ const BrowseItems = ({ maxItems }) => {
           const existingRequests = JSON.parse(localStorage.getItem('borrowRequests') || '[]');
           existingRequests.push(localBorrowRequest);
           localStorage.setItem('borrowRequests', JSON.stringify(existingRequests));
-          console.log('✅ Borrow request saved to localStorage');
+          console.log('Borrow request saved to localStorage');
         } catch (error) {
-          console.warn('⚠️ Failed to save borrow request to localStorage:', error);
+          console.warn('Failed to save borrow request to localStorage:', error);
         }
 
         const notif = {
@@ -221,10 +227,10 @@ const BrowseItems = ({ maxItems }) => {
               payload: notif.payload,
               createdAt: serverTimestamp(),
             });
-            console.log('✅ Notification saved to Firebase');
+            console.log('Notification saved to Firebase');
           }
         } catch (e) {
-          console.warn('⚠️ Failed to write firestore notification:', e);
+          console.warn('Failed to write firestore notification:', e);
         }
 
         // After saving request & notifications, mark item as pending in Firestore so UI shows Reserved
@@ -236,10 +242,10 @@ const BrowseItems = ({ maxItems }) => {
               reservedAt: serverTimestamp(),
               borrowRequestId: borrowRequestId
             });
-            console.log('\u2705 Item marked as pending in Firestore');
+            console.log('Item marked as pending in Firestore');
           }
         } catch (e) {
-          console.warn('\u26a0\ufe0f Failed to mark item as pending in Firestore:', e);
+          console.warn('Failed to mark item as pending in Firestore:', e);
         }
 
         list.unshift(notif);
@@ -399,23 +405,25 @@ const BrowseItems = ({ maxItems }) => {
   if (!items || items.length === 0) {
     return (
       <div className="p-6">
-        {/* Search Bar */}
-        <div className="max-w-md mx-auto mb-8">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search items... (e.g., tshirt, book, laptop)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+        {/* Search Bar - shown only when enabled (Explore page) */}
+        {showSearch && (
+          <div className="max-w-md mx-auto mb-8">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search items... (e.g., tshirt, book, laptop)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
+        )}
         <div className="text-center text-gray-500">No items posted yet.</div>
       </div>
     );
@@ -425,33 +433,35 @@ const BrowseItems = ({ maxItems }) => {
 
   return (
     <div className="p-6">
-      {/* Search Bar */}
-      <div className="max-w-md mx-auto mb-8">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search items..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-            >
-              <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      {/* Search Bar (only on Explore / browse) */}
+      {showSearch && (
+        <div className="max-w-md mx-auto mb-8">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search items..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-            </button>
-          )}
+            </div>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Search Results Info */}
       {searchQuery && (

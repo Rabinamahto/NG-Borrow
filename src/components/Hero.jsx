@@ -107,8 +107,8 @@ const Home = () => {
         
        
         <div className="mt-8">
-          {/* Show a subset of browse items under the Home hero section */}
-          <BrowseItems maxItems={8} />
+          {/* Show a subset of browse items under the Home hero section (no search here) */}
+          <BrowseItems maxItems={8} showSearch={false} />
         </div>
 
         <motion.div

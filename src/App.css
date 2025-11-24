@@ -40,3 +40,14 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Font Awesome icon styling used across the app (consistent size & spacing) */
+.fa-app-icon {
+  font-size: 1rem; /* base size consistent with text */
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.fa-app-icon-lg {
+  font-size: 1.125rem;
+}

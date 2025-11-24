@@ -50,6 +50,8 @@ const EditItem = () => {
         loadItem();
     }, [id]);
 
+    const today = new Date().toISOString().split('T')[0];
+
     const handleSave = (e) => {
         e.preventDefault();
         setError('');
@@ -119,8 +121,8 @@ const EditItem = () => {
             
             <h1 className="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">Edit Item: {item.title}</h1>
             
-            {message && <div className="p-3 mb-4 bg-green-100 text-green-700 rounded-lg">✅ {message}</div>}
-            {error && <div className="p-3 mb-4 bg-red-100 text-red-700 rounded-lg">❌ {error}</div>}
+            {message && <div className="p-3 mb-4 bg-green-100 text-green-700 rounded-lg"><i className="fa-solid fa-circle-check fa-app-icon" aria-hidden="true"></i> {message}</div>}
+            {error && <div className="p-3 mb-4 bg-red-100 text-red-700 rounded-lg"><i className="fa-solid fa-circle-xmark fa-app-icon" aria-hidden="true"></i> {error}</div>}
 
             <form onSubmit={handleSave} className="space-y-6">
                 
@@ -177,6 +179,7 @@ const EditItem = () => {
                             type="date"
                             value={reservedUntil}
                             onChange={(e) => setReservedUntil(e.target.value)}
+                            min={today}
                             className="w-full border border-gray-300 p-3 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                         />
                     </div>

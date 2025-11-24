@@ -160,12 +160,12 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📱 Responsive Chat Test Suite</h1>
+            <h1><i class="fa-solid fa-mobile-screen-button fa-app-icon"></i> Responsive Chat Test Suite</h1>
             <p>Complete testing for mobile, tablet, and desktop chat experience</p>
         </div>
 
         <div class="section">
-            <h3>🚀 Quick Setup</h3>
+            <h3><i class="fa-solid fa-rocket fa-app-icon"></i> Quick Setup</h3>
             <div class="test-grid">
                 <div class="test-card">
                     <h4>1. Create Test Data</h4>
@@ -183,14 +183,14 @@
         </div>
 
         <div class="section">
-            <h3>📱 Mobile Responsiveness Tests</h3>
+            <h3><i class="fa-solid fa-mobile-screen-button fa-app-icon"></i> Mobile Responsiveness Tests</h3>
             <div class="info">
-                <strong>🎯 Mobile Test Checklist:</strong><br>
-                <span class="emoji">✅</span> Left sidebar shows full width on mobile<br>
-                <span class="emoji">✅</span> Back button appears when in chat<br>
-                <span class="emoji">✅</span> Smooth transition between list and chat<br>
-                <span class="emoji">✅</span> Context menu positions correctly<br>
-                <span class="emoji">✅</span> Messages wrap properly on small screens
+                <strong><i class="fa-solid fa-bullseye fa-app-icon"></i> Mobile Test Checklist:</strong><br>
+                <i class="fa-solid fa-circle-check fa-app-icon"></i> Left sidebar shows full width on mobile<br>
+                <i class="fa-solid fa-circle-check fa-app-icon"></i> Back button appears when in chat<br>
+                <i class="fa-solid fa-circle-check fa-app-icon"></i> Smooth transition between list and chat<br>
+                <i class="fa-solid fa-circle-check fa-app-icon"></i> Context menu positions correctly<br>
+                <i class="fa-solid fa-circle-check fa-app-icon"></i> Messages wrap properly on small screens
             </div>
             
             <div class="test-grid">
@@ -229,13 +229,13 @@
         </div>
 
         <div class="section">
-            <h3>🖱️ Enhanced Context Menu Tests</h3>
+            <h3><i class="fa-solid fa-mouse fa-app-icon"></i> Enhanced Context Menu Tests</h3>
             <div class="info">
-                <strong>🎯 New Context Menu Features:</strong><br>
-                <span class="emoji">📋</span> <strong>Copy:</strong> Copy message text to clipboard<br>
-                <span class="emoji">✏️</span> <strong>Edit:</strong> Edit your own messages inline<br>
-                <span class="emoji">🗑️</span> <strong>Delete for Everyone:</strong> Remove message for all users<br>
-                <span class="emoji">🚮</span> <strong>Delete for Me:</strong> Remove from your view only
+                <strong><i class="fa-solid fa-bullseye fa-app-icon"></i> New Context Menu Features:</strong><br>
+                <i class="fa-solid fa-clipboard fa-app-icon"></i> <strong>Copy:</strong> Copy message text to clipboard<br>
+                <i class="fa-solid fa-pen fa-app-icon"></i> <strong>Edit:</strong> Edit your own messages inline<br>
+                <i class="fa-solid fa-trash fa-app-icon"></i> <strong>Delete for Everyone:</strong> Remove message for all users<br>
+                <i class="fa-solid fa-trash fa-app-icon"></i> <strong>Delete for Me:</strong> Remove from your view only
             </div>
             
             <div class="test-grid">
@@ -253,7 +253,7 @@
         </div>
 
         <div class="section">
-            <h3>👥 Multiple User Chat Test</h3>
+            <h3><i class="fa-solid fa-users fa-app-icon"></i> Multiple User Chat Test</h3>
             <div class="test-grid">
                 <div class="test-card">
                     <h4>Same User Multiple Items</h4>
@@ -365,10 +365,10 @@
             addTestMessages();
 
             document.getElementById('setupStatus').innerHTML = 
-                '<div class="success">✅ Complete test data created!<br>' +
-                '📱 4 approved requests<br>' +
-                '👥 3 different chat users<br>' +
-                '💬 Pre-loaded conversations</div>';
+                '<div class="success"><i class="fa-solid fa-circle-check fa-app-icon"></i> Complete test data created!<br>' +
+                '<i class="fa-solid fa-mobile-screen-button fa-app-icon"></i> 4 approved requests<br>' +
+                '<i class="fa-solid fa-users fa-app-icon"></i> 3 different chat users<br>' +
+                '<i class="fa-solid fa-comments fa-app-icon"></i> Pre-loaded conversations</div>';
         }
 
         function addTestMessages() {
@@ -378,7 +378,7 @@
                     messages: [
                         {
                             id: 'msg_responsive_001',
-                            text: 'Hi Rajesh! Thanks for approving both my requests 😊',
+                            text: 'Hi Rajesh! Thanks for approving both my requests (smile)',
                             senderId: 'demo-user',
                             senderName: 'Demo User',
                             receiverId: 'owner_rajesh',
@@ -418,7 +418,7 @@
                         },
                         {
                             id: 'msg_responsive_005',
-                            text: 'Great! See you at 6. Thanks again for being so helpful! 🙏',
+                            text: 'Great! See you at 6. Thanks again for being so helpful! (thanks)',
                             senderId: 'demo-user',
                             senderName: 'Demo User',
                             receiverId: 'owner_rajesh',
@@ -433,7 +433,7 @@
                     messages: [
                         {
                             id: 'msg_responsive_101',
-                            text: 'Hi Priya! Excited to try out the power drill for my home project 🔨',
+                            text: 'Hi Priya! Excited to try out the power drill for my home project (hammer)',
                             senderId: 'demo-user',
                             senderName: 'Demo User',
                             receiverId: 'owner_priya',
@@ -463,7 +463,7 @@
                         },
                         {
                             id: 'msg_responsive_104',
-                            text: 'Always wear safety glasses and gloves. Start with lower speed settings. I\'ll show you when you pick it up! 👷‍♀️',
+                            text: 'Always wear safety glasses and gloves. Start with lower speed settings. I\'ll show you when you pick it up! (construction)',
                             senderId: 'owner_priya',
                             senderName: 'Priya Sharma',
                             receiverId: 'demo-user',
@@ -478,7 +478,7 @@
                     messages: [
                         {
                             id: 'msg_responsive_201',
-                            text: 'Hey Amit! Just approved my request for the JBL speaker! 🔊',
+                            text: 'Hey Amit! Just approved my request for the JBL speaker! (loud)',
                             senderId: 'demo-user',
                             senderName: 'Demo User',
                             receiverId: 'owner_amit',
@@ -488,7 +488,7 @@
                         },
                         {
                             id: 'msg_responsive_202',
-                            text: 'Yes! Perfect timing. I was just cleaning it up for you. The sound quality is amazing - perfect for parties! 🎵',
+                            text: 'Yes! Perfect timing. I was just cleaning it up for you. The sound quality is amazing - perfect for parties! (music)',
                             senderId: 'owner_amit',
                             senderName: 'Amit Patel',
                             receiverId: 'demo-user',
@@ -507,7 +507,7 @@
 
             if (document.getElementById('setupStatus')) {
                 document.getElementById('setupStatus').innerHTML += 
-                    '<br><div class="success">💬 Test conversations added!</div>';
+                    '<br><div class="success"><i class="fa-solid fa-comments fa-app-icon"></i> Test conversations added!</div>';
             }
         }
 
@@ -523,27 +523,27 @@
         }
 
         function simulateMobile() {
-            alert('📱 To simulate mobile:\n\n1. Press F12 to open DevTools\n2. Click the device toggle button (📱)\n3. Select a mobile device or set width < 768px\n4. Refresh the chat page\n\n✅ Test: Back button should appear in chat header');
+            alert('To simulate mobile:\n\n1. Press F12 to open DevTools\n2. Click the device toggle button\n3. Select a mobile device or set width < 768px\n4. Refresh the chat page\n\nTest: Back button should appear in chat header');
         }
 
         function testContextMenu() {
-            alert('🖱️ Context Menu Tests:\n\n1. Go to chat page\n2. Right-click on any message\n3. Verify menu appears correctly positioned\n4. Test on mobile (long press on message)\n\n✅ Check: Menu should not go off-screen\n✅ Check: All options should work properly');
+            alert('Context Menu Tests:\n\n1. Go to chat page\n2. Right-click on any message\n3. Verify menu appears correctly positioned\n4. Test on mobile (long press on message)\n\nCheck: Menu should not go off-screen\nCheck: All options should work properly');
         }
 
         function testRefresh() {
-            alert('🔄 Refresh Test:\n\n1. Go to chat page\n2. Select a user and send a message\n3. Press F5 to refresh\n4. Verify users still appear in sidebar\n5. Verify chat history is preserved\n\n✅ Expected: All data should persist');
+            alert('Refresh Test:\n\n1. Go to chat page\n2. Select a user and send a message\n3. Press F5 to refresh\n4. Verify users still appear in sidebar\n5. Verify chat history is preserved\n\nExpected: All data should persist');
         }
 
         function testNavigation() {
-            alert('🧭 Navigation Test:\n\n1. Go to chat page\n2. Navigate to Home page\n3. Navigate to Browse Items\n4. Return to Chat page\n\n✅ Expected: Chat users should load automatically');
+            alert('Navigation Test:\n\n1. Go to chat page\n2. Navigate to Home page\n3. Navigate to Browse Items\n4. Return to Chat page\n\nExpected: Chat users should load automatically');
         }
 
         function testDirectAccess() {
-            alert('🎯 Direct Access Test:\n\n1. Open chat page directly (not via button)\n2. Check if users appear in sidebar\n3. Try selecting a user\n\n✅ Expected: Should work without URL parameters');
+            alert('Direct Access Test:\n\n1. Open chat page directly (not via button)\n2. Check if users appear in sidebar\n3. Try selecting a user\n\nExpected: Should work without URL parameters');
         }
 
         function showContextInstructions() {
-            alert('🖱️ Enhanced Context Menu Instructions:\n\n📋 COPY: Right-click → Copy → Check clipboard\n✏️ EDIT: Right-click your message → Edit → Modify text → Save/Cancel\n🗑️ DELETE FOR EVERYONE: Right-click your message → Delete for Everyone\n🚮 DELETE FOR ME: Right-click any message → Delete for Me\n\n✅ Test all options on both mobile and desktop!');
+            alert('Enhanced Context Menu Instructions:\n\nCOPY: Right-click → Copy → Check clipboard\nEDIT: Right-click your message → Edit → Modify text → Save/Cancel\nDELETE FOR EVERYONE: Right-click your message → Delete for Everyone\nDELETE FOR ME: Right-click any message → Delete for Me\n\nTest all options on both mobile and desktop!');
         }
 
         function createMultipleItemRequests() {
@@ -575,7 +575,7 @@
             const allRequests = [...existingRequests, ...additionalRequests];
             localStorage.setItem('borrowRequests', JSON.stringify(allRequests));
 
-            alert('✅ Multiple Items Test Created!\n\n📱 Now Rajesh Kumar has 3 items approved for same user\n🔗 All should show in single chat conversation\n\n📋 Test: Go to Borrow Requests → Click "Chat with User" for different items → Should open same chat');
+            alert('Multiple Items Test Created!\n\nNow Rajesh Kumar has 3 items approved for same user\nAll should show in single chat conversation\n\nTest: Go to Borrow Requests → Click "Chat with User" for different items → Should open same chat');
         }
 
         function openBorrowRequests() {
@@ -588,16 +588,16 @@
             
             let html = '<div style="background: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">';
             
-            html += '<h4 style="color: #25D366;">📊 System Status</h4>';
-            
-            html += `<div style="margin: 15px 0;"><strong>📝 Borrow Requests:</strong> ${borrowRequests.length}</div>`;
+            html += '<h4 style="color: #25D366;"><i class="fa-solid fa-chart-bar fa-app-icon"></i> System Status</h4>';
+
+            html += `<div style="margin: 15px 0;"><strong><i class="fa-solid fa-file-lines fa-app-icon"></i> Borrow Requests:</strong> ${borrowRequests.length}</div>`;
             borrowRequests.forEach((req, index) => {
                 html += `<div style="margin: 8px 0; padding: 10px; background: #f9f9f9; border-radius: 5px; font-size: 0.9rem;">
                     ${index + 1}. ${req.itemTitle} - ${req.itemOwnerName} → ${req.borrowerName} (${req.status})
                 </div>`;
             });
 
-            html += `<div style="margin: 15px 0;"><strong>👥 Chat Users:</strong> ${chatUsers.length}</div>`;
+            html += `<div style="margin: 15px 0;"><strong><i class="fa-solid fa-users fa-app-icon"></i> Chat Users:</strong> ${chatUsers.length}</div>`;
             chatUsers.forEach((user, index) => {
                 html += `<div style="margin: 8px 0; padding: 10px; background: #f9f9f9; border-radius: 5px; font-size: 0.9rem;">
                     ${index + 1}. ${user.name} (${user.role}) - Items: ${user.items ? user.items.join(', ') : user.itemName}
@@ -606,7 +606,7 @@
 
             // Count messages
             let totalMessages = 0;
-            html += '<div style="margin: 15px 0;"><strong>💬 Chat Messages:</strong></div>';
+            html += '<div style="margin: 15px 0;"><strong><i class="fa-solid fa-comments fa-app-icon"></i> Chat Messages:</strong></div>';
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key && key.startsWith('chat_')) {
@@ -618,14 +618,14 @@
                 }
             }
 
-            html += `<div style="margin: 15px 0; font-size: 1.1rem;"><strong>📈 Total Messages: ${totalMessages}</strong></div>`;
+            html += `<div style="margin: 15px 0; font-size: 1.1rem;"><strong><i class="fa-solid fa-chart-line fa-app-icon"></i> Total Messages: ${totalMessages}</strong></div>`;
             html += '</div>';
 
             document.getElementById('systemStatus').innerHTML = html;
         }
 
         function clearAllTestData() {
-            if (confirm('🗑️ Are you sure you want to clear all test data?')) {
+            if (confirm('Are you sure you want to clear all test data?')) {
                 const keys = ['borrowRequests', 'chatUsers', 'notifications', 'browseItems'];
                 keys.forEach(key => localStorage.removeItem(key));
                 
@@ -638,7 +638,7 @@
                 }
                 
                 document.getElementById('systemStatus').innerHTML = 
-                    '<div class="success">✅ All test data cleared successfully!</div>';
+                    '<div class="success"><i class="fa-solid fa-circle-check fa-app-icon"></i> All test data cleared successfully!</div>';
             }
         }
 

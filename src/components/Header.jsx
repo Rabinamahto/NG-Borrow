@@ -16,7 +16,6 @@ const defaultUser = {
   location: "University Main Campus - Block B",
   itemsShared: 12,
   itemsBorrowed: 8,
-  rating: 4.9,
   profileImage: "",
 };
 

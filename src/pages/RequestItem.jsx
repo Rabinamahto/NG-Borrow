@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 // Lucide icons imports: Zaruri icons yahaan hain
-import { User, Zap, Clock, CheckCircle, XCircle, Star, ChevronDown, ChevronUp, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react"; 
+import { User, Zap, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react"; 
 
 // --- Helper Function: Date Formatting ---
 const formatButtonDate = (dateString) => {
@@ -103,16 +103,7 @@ const ImageCarousel = ({ images, category, status }) => {
     );
 };
 
-// --- Helper Component: Star Rating ---
-const StarRating = ({ rating }) => {
-  return (
-    <div className="flex items-center space-x-1">
-        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500/80" /> 
-        <span className="text-sm font-bold text-gray-900">{rating.toFixed(1)}</span>
-        <span className="text-xs font-medium text-gray-500">(Rating)</span>
-    </div>
-  );
-};
+// Star rating removed: app no longer shows ratings on request cards
 
 // --- Helper Component: Status Dropdown Menu (Only for Available Items) ---
 const StatusDropdown = ({ item, onStatusChange, toggleMenu }) => {
@@ -343,10 +334,9 @@ const CardContent = ({ item }) => {
       {/* 2. MAIN CONTENT AREA (Padded and Styled) */}
       <div className="px-4 pt-3 pb-3 flex flex-col flex-grow">
         
-        {/* ROW 1: STATUS BADGE and RATING */}
+        {/* ROW 1: STATUS BADGE */}
         <div className="flex justify-between items-center mb-2">
             <StatusBadge />
-            <StarRating rating={item.rating} />
         </div>
         
         {/* ROW 2: ITEM NAME */}
@@ -410,7 +400,6 @@ const initialRequestableItems = [
     handle: "@rahuls", 
     condition: "Good", 
     status: "PENDING", 
-    rating: 4.5, 
     category: "CALCULATOR", 
     categoryTag: "Gadgets", 
     description: "Advanced graphing calculator for engineering students with complex functions. High-resolution display and solar charging.", 
@@ -429,7 +418,6 @@ const initialRequestableItems = [
     handle: "@snehag", 
     condition: "Used", 
     status: "ACCEPTED", 
-    rating: 5.0, 
     category: "JS BOOK", 
     categoryTag: "Books", 
     description: "A comprehensive guide to ES6 and modern JavaScript. Covers asynchronous programming and React basics.", 
@@ -448,7 +436,6 @@ const initialRequestableItems = [
     handle: "@amitv", 
     condition: "New", 
     status: "UNAVAILABLE", 
-    rating: 4.0, 
     category: "HDMI CABLE", 
     categoryTag: "Accessories", 
     description: "High-speed 4K compatible HDMI cable. Supports Ethernet and 3D. Perfect for gaming consoles and PCs.", 
@@ -468,7 +455,6 @@ const initialRequestableItems = [
     handle: "@karanp", 
     condition: "Excellent", 
     status: "PENDING", 
-    rating: 4.6, 
     category: "DIGITAL ART", 
     categoryTag: "Hardware", 
     description: "High-precision drawing tablet for professional use with pressure sensitivity. Includes stylus and extra nibs.", 
@@ -487,7 +473,6 @@ const initialRequestableItems = [
     handle: "@priya_s", 
     condition: "Good", 
     status: "AVAILABLE", 
-    rating: 4.7, 
     category: "PROGRAMMING", 
     categoryTag: "Books", 
     description: "Book on modern React development techniques and advanced hooks. Essential for intermediate developers.", 
@@ -505,7 +490,6 @@ const initialRequestableItems = [
     handle: "@priya_s", 
     condition: "Excellent", 
     status: "AVAILABLE", 
-    rating: 5.0, 
     category: "MONITOR", 
     categoryTag: "Electronics", 
     description: "27-inch 4K monitor with adjustable stand and USB-C connectivity. Ideal for graphic design.", 
@@ -523,7 +507,6 @@ const initialRequestableItems = [
     handle: "@janedoe", 
     condition: "Good", 
     status: "AVAILABLE", 
-    rating: 4.8, 
     category: "ALGORITHMS", 
     categoryTag: "Books", 
     description: "A classic text for computer science students covering all major algorithms and data structures.", 
@@ -540,7 +523,6 @@ const initialRequestableItems = [
     handle: "@snehag", 
     condition: "Used", 
     status: "AVAILABLE", 
-    rating: 4.7, 
     category: "PYTHON", 
     categoryTag: "Books", 
     description: "Quick reference guide for Python syntax and libraries. Great for quick lookups on the fly.", 
@@ -557,7 +539,6 @@ const initialRequestableItems = [
     handle: "@ankitk", 
     condition: "Excellent", 
     status: "AVAILABLE", 
-    rating: 4.9, 
     category: "ALGORITHMS", 
     categoryTag: "Books", 
     description: "Concise guide for quickly revising array, list, and tree structures. Must-have for interviews.", 
@@ -574,7 +555,6 @@ const initialRequestableItems = [
     handle: "@bhavnar", 
     condition: "New", 
     status: "AVAILABLE", 
-    rating: 4.2, 
     category: "MOUSE", 
     categoryTag: "Accessories", 
     description: "Ergonomic wireless mouse with rechargeable battery and silent click feature. Perfect for long working hours.", 
@@ -591,7 +571,6 @@ const initialRequestableItems = [
     handle: "@chiragd", 
     condition: "Good", 
     status: "AVAILABLE", 
-    rating: 4.4, 
     category: "ADAPTER", 
     categoryTag: "Gadgets", 
     description: "High-quality adapter supporting 4K resolution. Required for connecting new laptops to old monitors.", 
@@ -609,7 +588,6 @@ const initialRequestableItems = [
     handle: "@divyam", 
     condition: "Used", 
     status: "AVAILABLE", 
-    rating: 4.8, 
     category: "PROGRAMMING", 
     categoryTag: "Books", 
     description: "Standard university textbook covering neural networks, CNNs, and RNNs. Essential foundation knowledge.", 
@@ -627,7 +605,6 @@ const initialRequestableItems = [
     handle: "@esha_s", 
     condition: "Excellent", 
     status: "AVAILABLE", 
-    rating: 4.9, 
     category: "KEYBOARD", 
     categoryTag: "Hardware", 
     description: "Full-sized mechanical keyboard with blue switches. Ideal for typing and programming.", 
@@ -644,7 +621,6 @@ const initialRequestableItems = [
     handle: "@farhan_z", 
     condition: "Good", 
     status: "AVAILABLE", 
-    rating: 4.3, 
     category: "NETWORKING", 
     categoryTag: "Books", 
     description: "Introductory book covering TCP/IP, subnets, and network security essentials.", 
@@ -661,7 +637,6 @@ const initialRequestableItems = [
     handle: "@geeta_p", 
     condition: "New", 
     status: "AVAILABLE", 
-    rating: 4.6, 
     category: "STORAGE", 
     categoryTag: "Gadgets", 
     description: "Portable 1TB SSD external hard drive with USB 3.0 interface for fast data transfer.", 
@@ -678,7 +653,6 @@ const initialRequestableItems = [
     handle: "@harsh_v", 
     condition: "Used", 
     status: "AVAILABLE", 
-    rating: 4.5, 
     category: "WEBCAM", 
     categoryTag: "Electronics", 
     description: "High-quality webcam with built-in microphone and auto-focus for clear video calls.", 
